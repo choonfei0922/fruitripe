@@ -1,0 +1,1 @@
+enum RipenessStage { unripe, ripe, overripe, rotten }
