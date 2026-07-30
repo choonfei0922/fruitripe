@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FruitRipe · Admin Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --rind:   #F2F6EF;  /* page background — pale honeydew */
+    --flesh:  #FFFFFF;  /* card surface */
+    --stem:   #1E3527;  /* deep leaf-green ink */
+    --muted:  #5F7264;  /* secondary text */
+    --hairline:#DCE5DA;
+    --leaf:   #2E7D4F;  /* primary action green */
+    --leaf-dk:#236240;
+    --mango:  #E8A33D;  /* gold accent — admin */
+    --bruise: #8C4A2F;  /* destructive / warnings */
+    --bruise-bg:#F7EDE7;
+    --unripe: #4CAF6D;
+    --ripe:   #E8C43D;
+    --overripe:#E8933D;
+    --rotten: #7A4526;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(30,53,39,.06), 0 8px 24px rgba(30,53,39,.07);
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-body: "Instrument Sans", system-ui, sans-serif;
+    --font-mono: "Spline Sans Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font-body);
+    background: var(--rind);
+    color: var(--stem);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; cursor: pointer; color: inherit; background: none; border: none; }
+  input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; border-radius: 4px; }
+
+  .band {
+    height: 5px;
+    background: linear-gradient(90deg,
+      var(--unripe) 0%, var(--ripe) 36%, var(--overripe) 66%, var(--rotten) 100%);
+  }
+
+  /* ---------- login ---------- */
+  #view-login {
+    min-height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .login-card {
+    width: 100%; max-width: 420px;
+    background: var(--flesh);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .login-inner { padding: 36px 36px 40px; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: 800; font-size: 34px; line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 6px 0 4px;
+  }
+  .login-sub { color: var(--muted); margin-bottom: 28px; }
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid var(--hairline); border-radius: 8px;
+    background: var(--rind);
+  }
+  .field input:focus { border-color: var(--leaf); background: #fff; outline: none; }
+  .btn-primary {
+    width: 100%; padding: 11px 16px; margin-top: 8px;
+    background: var(--leaf); color: #fff;
+    border-radius: 8px; font-weight: 600;
+    transition: background .15s ease;
+  }
+  .btn-primary:hover { background: var(--leaf-dk); }
+  .btn-primary:disabled { opacity: .6; cursor: default; }
+  .login-error {
+    display: none;
+    margin-top: 16px; padding: 10px 12px;
+    background: var(--bruise-bg); color: var(--bruise);
+    border-radius: 8px; font-size: 13.5px;
+  }
+  .login-error.show { display: block; }
+
+  /* ---------- dashboard ---------- */
+  #view-dash { display: none; min-height: 100%; }
+  header.topbar {
+    background: var(--flesh);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .topbar-inner {
+    max-width: 1080px; margin: 0 auto;
+    padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand .wordmark { font-size: 20px; margin: 0; }
+  .brand .eyebrow { font-size: 10px; }
+  .whoami { display: flex; align-items: center; gap: 12px; font-size: 13.5px; color: var(--muted); }
+  .whoami .email { font-family: var(--font-mono); font-size: 12.5px; }
+  .btn-ghost {
+    padding: 7px 12px; border: 1px solid var(--hairline); border-radius: 8px;
+    font-size: 13px; font-weight: 500; background: var(--flesh);
+    transition: border-color .15s ease;
+  }
+  .btn-ghost:hover { border-color: var(--stem); }
+
+  main { max-width: 1080px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  .banner {
+    display: none;
+    margin-bottom: 24px; padding: 14px 16px;
+    background: var(--bruise-bg); color: var(--bruise);
+    border: 1px solid #E4CDBF; border-radius: var(--radius);
+    font-size: 14px;
+  }
+  .banner.show { display: block; }
+  .banner code {
+    font-family: var(--font-mono); font-size: 12.5px;
+    background: rgba(140,74,47,.1); padding: 1px 5px; border-radius: 4px;
+  }
+
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-head h2 {
+    font-family: var(--font-display); font-weight: 700; font-size: 22px;
+    letter-spacing: -0.01em;
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    background: var(--flesh);
+    border: 1px solid var(--hairline); border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .stat { padding: 18px 20px; }
+  .stat + .stat { border-left: 1px solid var(--hairline); }
+  .stat .num {
+    font-family: var(--font-display); font-weight: 800; font-size: 30px;
+    line-height: 1.1;
+  }
+  .stat .lbl { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .stat.warn .num { color: var(--bruise); }
+
+  .controls {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .search {
+    flex: 1; min-width: 220px;
+    padding: 9px 12px;
+    border: 1px solid var(--hairline); border-radius: 8px;
+    background: var(--flesh);
+  }
+  .search:focus { border-color: var(--leaf); outline: none; }
+  .seg { display: flex; border: 1px solid var(--hairline); border-radius: 8px; overflow: hidden; background: var(--flesh); }
+  .seg button {
+    padding: 8px 14px; font-size: 13px; font-weight: 500; color: var(--muted);
+    border-radius: 0;
+  }
+  .seg button + button { border-left: 1px solid var(--hairline); }
+  .seg button.active { background: var(--stem); color: #fff; }
+
+  .table-wrap {
+    background: var(--flesh);
+    border: 1px solid var(--hairline); border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 780px; }
+  thead th {
+    font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+    text-align: left; padding: 12px 16px;
+    border-bottom: 1px solid var(--hairline);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--hairline);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #FAFCF9; }
+
+  .u-cell { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--stem); color: var(--rind);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; font-size: 14px;
+    flex-shrink: 0; overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .u-name { font-weight: 600; }
+  .u-email { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .you-tag {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em;
+    color: var(--mango); margin-left: 6px;
+  }
+
+  select.cell-select {
+    padding: 6px 8px; border: 1px solid var(--hairline); border-radius: 6px;
+    background: var(--flesh); font-size: 13px;
+  }
+  select.cell-select:disabled { opacity: .55; cursor: not-allowed; }
+  select.role-admin { border-color: var(--mango); color: var(--stem); font-weight: 600; }
+
+  .fails { font-family: var(--font-mono); font-size: 13px; }
+  .fails.bad { color: var(--bruise); font-weight: 500; }
+  .btn-mini {
+    font-size: 12px; font-weight: 500; padding: 4px 8px;
+    border: 1px solid var(--hairline); border-radius: 6px;
+    margin-left: 8px; background: var(--flesh);
+  }
+  .btn-mini:hover { border-color: var(--stem); }
+  .btn-danger { color: var(--bruise); }
+  .btn-danger:hover { border-color: var(--bruise); background: var(--bruise-bg); }
+  .btn-mini:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-mini:disabled:hover { border-color: var(--hairline); background: var(--flesh); }
+
+  .date-cell { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+
+  .empty {
+    padding: 48px 24px; text-align: center; color: var(--muted);
+  }
+  .empty .big { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--stem); margin-bottom: 4px; }
+
+  /* ---------- toast ---------- */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(8px);
+    background: var(--stem); color: var(--rind);
+    padding: 10px 18px; border-radius: 8px; font-size: 14px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+    max-width: 90vw;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.err { background: var(--bruise); color: #fff; }
+
+  /* ---------- modal ---------- */
+  #modal-overlay {
+    position: fixed; inset: 0; background: rgba(30,53,39,.4);
+    display: none; align-items: center; justify-content: center;
+    padding: 24px; z-index: 50;
+  }
+  #modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--flesh); border-radius: var(--radius);
+    max-width: 440px; width: 100%;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .modal-body { padding: 24px 28px; }
+  .modal-body h3 { font-family: var(--font-display); font-weight: 700; font-size: 19px; margin-bottom: 8px; }
+  .modal-body p { color: var(--muted); font-size: 14px; }
+  .modal-actions {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 28px 22px;
+  }
+  .modal-actions .btn-ghost { padding: 9px 16px; }
+  .btn-solid {
+    padding: 9px 16px; border-radius: 8px; font-weight: 600; color: #fff;
+    background: var(--leaf);
+  }
+  .btn-solid.danger { background: var(--bruise); }
+
+  @media (max-width: 720px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat:nth-child(3) { border-left: none; border-top: 1px solid var(--hairline); }
+    .stat:nth-child(4) { border-top: 1px solid var(--hairline); }
+    .login-inner { padding: 28px 24px 32px; }
+    .topbar-inner { padding: 12px 16px; }
+    main { padding: 24px 16px 48px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="view-login">
+  <div class="login-card">
+    <div class="band"></div>
+    <div class="login-inner">
+      <div class="eyebrow">Admin console</div>
+      <h1 class="wordmark">FruitRipe</h1>
+      <p class="login-sub">Sign in to manage FruitRipe accounts.</p>
+
+      <div class="field">
+        <label for="in-email">Email</label>
+        <input id="in-email" type="email" autocomplete="username" placeholder="admin@gmail.com" />
+      </div>
+      <div class="field">
+        <label for="in-pass">Password</label>
+        <input id="in-pass" type="password" autocomplete="current-password" placeholder="••••••••" />
+      </div>
+      <button id="btn-login" class="btn-primary">Sign in</button>
+      <div id="login-error" class="login-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="view-dash">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="wordmark">FruitRipe</span>
+        <span class="eyebrow">Admin</span>
+      </div>
+      <div class="whoami">
+        <span class="email" id="me-email"></span>
+        <button id="btn-signout" class="btn-ghost">Sign out</button>
+      </div>
+    </div>
+    <div class="band"></div>
+  </header>
+
+  <main>
+    <div id="rls-banner" class="banner">
+      Row Level Security is hiding rows from this admin account. Run
+      <code>admin_policies.sql</code> in the Supabase SQL Editor, then refresh.
+    </div>
+
+    <div class="section-head">
+      <h2>Users</h2>
+      <button id="btn-refresh" class="btn-ghost">Refresh</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="num" id="st-total">–</div><div class="lbl">Total accounts</div></div>
+      <div class="stat"><div class="num" id="st-admins">–</div><div class="lbl">Administrators</div></div>
+      <div class="stat"><div class="num" id="st-new">–</div><div class="lbl">New this week</div></div>
+      <div class="stat warn"><div class="num" id="st-fails">–</div><div class="lbl">Failed sign-ins</div></div>
+    </div>
+
+    <div class="controls">
+      <input id="in-search" class="search" type="search" placeholder="Search username or email" />
+      <div class="seg" id="role-seg">
+        <button data-role="all" class="active">All</button>
+        <button data-role="user">Users</button>
+        <button data-role="admin">Admins</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Role</th>
+            <th>Alerts</th>
+            <th>Failed sign-ins</th>
+            <th>Joined</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="empty" class="empty" style="display:none"></div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<div id="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="band"></div>
+    <div class="modal-body">
+      <h3 id="modal-title"></h3>
+      <p id="modal-text"></p>
+    </div>
+    <div class="modal-actions">
+      <button id="modal-cancel" class="btn-ghost">Cancel</button>
+      <button id="modal-ok" class="btn-solid"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+"use strict";
+
+/* ---------- connection (from lib/core/supabase_config.dart) ---------- */
+const SUPABASE_URL = "https://lgbegzejxgnskptdwpmp.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnYmVnemVqeGduc2twdGR3cG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NDg5NTYsImV4cCI6MjEwMDUyNDk1Nn0.cEIQCSY4gQaeX9yDnxMblEV8cwitFvHLByGr2vDTPik";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: false, autoRefreshToken: true },
+});
+
+/* ---------- state ---------- */
+const state = {
+  me: null,        // my app_user row
+  users: [],       // all rows
+  q: "",
+  roleFilter: "all",
+};
+
+const ALERT_OPTIONS = [
+  ["daily", "Daily summary"],
+  ["before_24h", "24 h before spoiling"],
+  ["none", "No notifications"],
+];
+
+/* ---------- helpers ---------- */
+const $ = (id) => document.getElementById(id);
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+function fmtDate(iso) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("en-MY", {
+      day: "numeric", month: "short", year: "numeric",
+    });
+  } catch { return "—"; }
+}
+
+let toastTimer = null;
+function toast(msg, isErr = false) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.toggle("err", isErr);
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+/* promise-based confirm modal */
+function confirmModal({ title, text, okLabel, danger = false }) {
+  return new Promise((resolve) => {
+    $("modal-title").textContent = title;
+    $("modal-text").textContent = text;
+    const ok = $("modal-ok");
+    ok.textContent = okLabel;
+    ok.classList.toggle("danger", danger);
+    $("modal-overlay").classList.add("show");
+
+    const done = (val) => {
+      $("modal-overlay").classList.remove("show");
+      ok.removeEventListener("click", onOk);
+      $("modal-cancel").removeEventListener("click", onCancel);
+      $("modal-overlay").removeEventListener("click", onOverlay);
+      resolve(val);
+    };
+    const onOk = () => done(true);
+    const onCancel = () => done(false);
+    const onOverlay = (e) => { if (e.target === $("modal-overlay")) done(false); };
+
+    ok.addEventListener("click", onOk);
+    $("modal-cancel").addEventListener("click", onCancel);
+    $("modal-overlay").addEventListener("click", onOverlay);
+  });
+}
+
+/* ---------- auth ---------- */
+async function login() {
+  const email = $("in-email").value.trim();
+  const pass = $("in-pass").value;
+  const errBox = $("login-error");
+  errBox.classList.remove("show");
+
+  if (!email || !pass) {
+    errBox.textContent = "Enter both email and password.";
+    errBox.classList.add("show");
+    return;
+  }
+
+  const btn = $("btn-login");
+  btn.disabled = true;
+  btn.textContent = "Signing in…";
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) throw new Error(friendlyAuthError(error.message));
+
+    const uid = data.user.id;
+    const { data: profile, error: pErr } = await sb
+      .from("app_user").select("*").eq("user_id", uid).maybeSingle();
+
+    if (pErr) throw new Error("Could not load your profile: " + pErr.message);
+    if (!profile) {
+      await sb.auth.signOut();
+      throw new Error(
+        "Signed in, but no profile row is visible. Either this account has no app_user row, " +
+        "or Row Level Security is blocking it — run admin_policies.sql in the SQL Editor."
+      );
+    }
+    if (profile.role !== "admin") {
+      await sb.auth.signOut();
+      throw new Error("That account isn't an administrator.");
+    }
+
+    state.me = profile;
+    enterDashboard();
+  } catch (e) {
+    errBox.textContent = e.message;
+    errBox.classList.add("show");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Sign in";
+  }
+}
+
+function friendlyAuthError(msg) {
+  const m = (msg || "").toLowerCase();
+  if (m.includes("invalid login credentials")) return "Incorrect email or password.";
+  if (m.includes("not confirmed")) return "This email isn't confirmed yet. Confirm it in Supabase → Authentication.";
+  if (m.includes("fetch")) return "Can't reach Supabase. Check your internet connection.";
+  return msg;
+}
+
+async function signOut() {
+  try { await sb.auth.signOut(); } catch (_) {}
+  state.me = null;
+  state.users = [];
+  $("view-dash").style.display = "none";
+  $("view-login").style.display = "flex";
+  $("in-pass").value = "";
+}
+
+/* ---------- data ---------- */
+async function loadUsers() {
+  const { data, error } = await sb
+    .from("app_user")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    toast("Could not load users: " + error.message, true);
+    return;
+  }
+
+  state.users = data || [];
+
+  // RLS silently filters rows on SELECT — if we can't even see ourself,
+  // or we only see ourself while expecting to manage others, warn.
+  const canSeeSelf = state.users.some((u) => u.user_id === state.me.user_id);
+  $("rls-banner").classList.toggle("show", !canSeeSelf);
+
+  render();
+}
+
+async function updateUser(id, changes, successMsg) {
+  changes.updated_at = new Date().toISOString();
+  const { data, error } = await sb
+    .from("app_user").update(changes).eq("user_id", id).select().maybeSingle();
+
+  if (error) {
+    toast("Save failed: " + error.message, true);
+    return false;
+  }
+  if (!data) {
+    toast("Save was blocked — check admin RLS policies.", true);
+    return false;
+  }
+  const i = state.users.findIndex((u) => u.user_id === id);
+  if (i !== -1) state.users[i] = data;
+  if (id === state.me.user_id) state.me = data;
+  render();
+  toast(successMsg);
+  return true;
+}
+
+async function changeRole(id, newRole) {
+  const u = state.users.find((x) => x.user_id === id);
+  if (!u) return;
+
+  const promoting = newRole === "admin";
+  const ok = await confirmModal({
+    title: promoting ? "Make administrator?" : "Remove administrator?",
+    text: promoting
+      ? `${u.username} will be able to sign in here and manage every account.`
+      : `${u.username} will lose access to this console and sign in through the app instead.`,
+    okLabel: promoting ? "Make admin" : "Make user",
+  });
+
+  if (!ok) { render(); return; }
+  await updateUser(id, { role: newRole }, `${u.username} is now ${promoting ? "an administrator" : "a user"}.`);
+}
+
+async function changeAlert(id, pref) {
+  const u = state.users.find((x) => x.user_id === id);
+  if (!u) return;
+  await updateUser(id, { alert_preference: pref }, `Alerts updated for ${u.username}.`);
+}
+
+async function resetFails(id) {
+  const u = state.users.find((x) => x.user_id === id);
+  if (!u) return;
+  await updateUser(id, { failed_login_count: 0 }, `Failed sign-ins reset for ${u.username}.`);
+}
+
+async function deleteUser(id) {
+  const u = state.users.find((x) => x.user_id === id);
+  if (!u) return;
+
+  const ok = await confirmModal({
+    title: `Delete ${u.username}'s profile?`,
+    text: "This removes the app_user row only. The sign-in account still exists — " +
+          "remove it in Supabase → Authentication → Users to delete it fully.",
+    okLabel: "Delete profile",
+    danger: true,
+  });
+  if (!ok) return;
+
+  const { error } = await sb.from("app_user").delete().eq("user_id", id);
+  if (error) {
+    toast("Delete failed: " + error.message, true);
+    return;
+  }
+  state.users = state.users.filter((x) => x.user_id !== id);
+  render();
+  toast(`${u.username}'s profile was deleted.`);
+}
+
+/* ---------- rendering ---------- */
+function enterDashboard() {
+  $("view-login").style.display = "none";
+  $("view-dash").style.display = "block";
+  $("me-email").textContent = state.me.email;
+  loadUsers();
+}
+
+function visibleUsers() {
+  const q = state.q.toLowerCase();
+  return state.users.filter((u) => {
+    if (state.roleFilter !== "all" && u.role !== state.roleFilter) return false;
+    if (!q) return true;
+    return (
+      (u.username || "").toLowerCase().includes(q) ||
+      (u.email || "").toLowerCase().includes(q)
+    );
+  });
+}
+
+function render() {
+  renderStats();
+  renderTable();
+}
+
+function renderStats() {
+  const now = Date.now();
+  const week = 7 * 24 * 3600 * 1000;
+  const total = state.users.length;
+  const admins = state.users.filter((u) => u.role === "admin").length;
+  const fresh = state.users.filter(
+    (u) => u.created_at && now - new Date(u.created_at).getTime() < week
+  ).length;
+  const fails = state.users.reduce((s, u) => s + (u.failed_login_count || 0), 0);
+
+  $("st-total").textContent = total;
+  $("st-admins").textContent = admins;
+  $("st-new").textContent = fresh;
+  $("st-fails").textContent = fails;
+}
+
+function renderTable() {
+  const rows = visibleUsers();
+  const tbody = $("tbody");
+  const empty = $("empty");
+
+  if (rows.length === 0) {
+    tbody.innerHTML = "";
+    empty.style.display = "block";
+    empty.innerHTML = state.q
+      ? `<div class="big">No users match “${escapeHtml(state.q)}”</div><div>Try a different name or email.</div>`
+      : `<div class="big">No users yet</div><div>Accounts appear here as people register in the app.</div>`;
+    return;
+  }
+  empty.style.display = "none";
+
+  tbody.innerHTML = rows.map((u) => {
+    const isMe = u.user_id === state.me.user_id;
+    const initial = (u.username || "?").trim().charAt(0).toUpperCase() || "?";
+    const avatar = u.profile_pic_url
+      ? `<span class="avatar"><img src="${escapeHtml(u.profile_pic_url)}" alt="" /></span>`
+      : `<span class="avatar">${escapeHtml(initial)}</span>`;
+    const fails = u.failed_login_count || 0;
+
+    return `
+    <tr data-id="${escapeHtml(u.user_id)}">
+      <td>
+        <div class="u-cell">
+          ${avatar}
+          <div>
+            <div class="u-name">${escapeHtml(u.username)}${isMe ? '<span class="you-tag">YOU</span>' : ""}</div>
+            <div class="u-email">${escapeHtml(u.email)}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <select class="cell-select ${u.role === "admin" ? "role-admin" : ""}" data-act="role"
+          ${isMe ? 'disabled title="You can\u2019t change your own role"' : ""}>
+          <option value="user" ${u.role === "user" ? "selected" : ""}>User</option>
+          <option value="admin" ${u.role === "admin" ? "selected" : ""}>Admin</option>
+        </select>
+      </td>
+      <td>
+        <select class="cell-select" data-act="alert">
+          ${ALERT_OPTIONS.map(([v, l]) =>
+            `<option value="${v}" ${u.alert_preference === v ? "selected" : ""}>${l}</option>`
+          ).join("")}
+        </select>
+      </td>
+      <td>
+        <span class="fails ${fails > 0 ? "bad" : ""}">${fails}</span>
+        ${fails > 0 ? `<button class="btn-mini" data-act="reset">Reset</button>` : ""}
+      </td>
+      <td class="date-cell">${fmtDate(u.created_at)}</td>
+      <td style="text-align:right">
+        <button class="btn-mini btn-danger" data-act="delete"
+          ${isMe ? 'disabled title="You can\u2019t delete your own account"' : ""}>Delete</button>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+/* ---------- events ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+  $("btn-login").addEventListener("click", login);
+  $("in-pass").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+  $("in-email").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+
+  $("btn-signout").addEventListener("click", signOut);
+  $("btn-refresh").addEventListener("click", () => { loadUsers(); toast("Refreshed."); });
+
+  $("in-search").addEventListener("input", (e) => {
+    state.q = e.target.value.trim();
+    renderTable();
+  });
+
+  $("role-seg").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-role]");
+    if (!btn) return;
+    state.roleFilter = btn.dataset.role;
+    document.querySelectorAll("#role-seg button").forEach((b) =>
+      b.classList.toggle("active", b === btn));
+    renderTable();
+  });
+
+  $("tbody").addEventListener("change", (e) => {
+    const sel = e.target.closest("select[data-act]");
+    if (!sel) return;
+    const id = sel.closest("tr").dataset.id;
+    if (sel.dataset.act === "role") changeRole(id, sel.value);
+    if (sel.dataset.act === "alert") changeAlert(id, sel.value);
+  });
+
+  $("tbody").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-act]");
+    if (!btn || btn.disabled) return;
+    const id = btn.closest("tr").dataset.id;
+    if (btn.dataset.act === "reset") resetFails(id);
+    if (btn.dataset.act === "delete") deleteUser(id);
+  });
+});
+</script>
+</body>
+</html>
