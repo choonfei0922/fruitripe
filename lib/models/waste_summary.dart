@@ -91,6 +91,7 @@ class WasteSummary {
     required this.weightWastedG,
     required this.batchScanCount,
     required this.totalScanCount,
+    required this.batchFruitCount,
   });
 
   final List<WasteSummaryRow> rows;
@@ -104,9 +105,12 @@ class WasteSummary {
 
   final int batchScanCount;
   final int totalScanCount;
+  final int batchFruitCount;
 
   bool get isEmpty => rows.isEmpty;
   int get totalResolved => totalConsumed + totalDiscarded;
+  double? get averageBatchSize =>
+      batchScanCount == 0 ? null : batchFruitCount / batchScanCount;
 
   double get weightSavedKg => weightSavedG / 1000;
   double get weightWastedKg => weightWastedG / 1000;
@@ -130,6 +134,7 @@ class WasteSummary {
       List<WasteSummaryRow> rows, {
         int batchScanCount = 0,
         int totalScanCount = 0,
+        int batchFruitCount = 0,
       }) {
     var consumed = 0;
     var discarded = 0;
@@ -190,6 +195,7 @@ class WasteSummary {
       weightWastedG: wasted,
       batchScanCount: batchScanCount,
       totalScanCount: totalScanCount,
+      batchFruitCount: batchFruitCount,
     );
   }
 

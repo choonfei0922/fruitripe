@@ -27,11 +27,28 @@ class AnalyticsProvider extends ChangeNotifier {
   String? _error;
   bool _loadedOnce = false;
 
+  /// Who this summary belongs to. Without it, _loadedOnce would block
+  /// the reload after an account switch and the new user would be
+  /// shown the previous user's statistics.
+  String _userId = '';
+
   WasteSummary get summary => _summary;
   AnalyticsPeriod get period => _period;
   bool get loading => _loading;
   String? get error => _error;
   bool get loadedOnce => _loadedOnce;
+
+  /// Called from the proxy provider in main.dart whenever AuthProvider
+  /// notifies. Clears silently, without notifyListeners: this runs
+  /// during a build and notifying there throws.
+  void onUserChanged(String userId) {
+    if (_userId == userId) return;
+    _userId = userId;
+    _summary = WasteSummary.empty;
+    _loadedOnce = false;
+    _error = null;
+    _loading = false;
+  }
 
   Future<void> load({bool force = false}) async {
     if (_loading) return;

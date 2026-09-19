@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:fruitripe/providers/auth_provider.dart';
 import 'package:fruitripe/features/auth/screen/edit_profile_screen.dart';
 import 'package:fruitripe/features/auth/widgets/profile_avatar.dart';
+import 'package:fruitripe/features/scan/screen/history_screen.dart';
+import 'package:fruitripe/features/storage_recipe_nutrition/screens/recipe_search_screen.dart';
+import 'package:fruitripe/features/storage_recipe_nutrition/screens/saved_recipes_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -111,6 +114,37 @@ class ProfileScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 24),
+            _SectionLabel('My History'),
+            _NavTile(
+              icon: Icons.history,
+              label: 'Scan History',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const HistoryScreen()),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+            // Module 5 lived behind the old stage picker, which left the
+            // bottom navigation when the scanner took its place. These
+            // two tiles are the only route into saved and browsable
+            // recipes now.
+            _SectionLabel('My Kitchen'),
+            _NavTile(
+              icon: Icons.bookmark_outline,
+              label: 'Saved Recipes',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SavedRecipesScreen()),
+              ),
+            ),
+            _NavTile(
+              icon: Icons.search,
+              label: 'Browse Recipes',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const RecipeSearchScreen()),
+              ),
+            ),
+
+            const SizedBox(height: 24),
             _SectionLabel('Preferences'),
             _InfoTile(
               icon: Icons.notifications_outlined,
@@ -199,6 +233,38 @@ class _InfoTile extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
         ),
         trailing: trailing,
+        dense: true,
+      ),
+    );
+  }
+}
+
+/// Same look as _InfoTile, but it goes somewhere.
+class _NavTile extends StatelessWidget {
+  const _NavTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 8),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
         dense: true,
       ),
     );

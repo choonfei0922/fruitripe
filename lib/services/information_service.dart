@@ -1,20 +1,3 @@
-// lib/services/information_service.dart
-//
-// Data access for Modules 2, 4 and 5:
-//   FR 2.1 - 2.3  storage recommendations
-//   FR 4.1 - 4.3  nutrition profiles
-//   FR 5.1 - 5.3  recipes and favourites
-//
-// Also carries the ADMIN WRITE methods at the bottom. Those calls
-// only succeed for a user whose app_user.role is 'admin' - the RLS
-// policies from 01_rls_app_user.sql enforce that server-side, so a
-// non-admin cannot bypass it by calling the method directly.
-//
-// NOTE: none of this depends on the scan pipeline. Given a fruit
-// type and a ripeness stage, everything here resolves from lookup
-// tables, which is why these modules can be built before your
-// teammate's scanner exists.
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:fruitripe/core/enums.dart';
@@ -55,6 +38,23 @@ class InformationService {
           .toList();
     } on PostgrestException catch (e) {
       throw InformationFailure('Could not load fruit list: ${e.message}');
+    }
+  }
+
+  Future<FruitType?> fetchFruitTypeByName(String name) async {
+    final clean = name.trim();
+    if (clean.isEmpty) return null;
+
+    try {
+      final row = await _client
+          .from('fruit_type')
+          .select()
+          .ilike('name', clean)
+          .maybeSingle();
+
+      return row == null ? null : FruitType.fromMap(row);
+    } on PostgrestException catch (e) {
+      throw InformationFailure('Could not look up $clean: ${e.message}');
     }
   }
 

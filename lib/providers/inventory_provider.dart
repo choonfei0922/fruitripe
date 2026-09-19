@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:fruitripe/core/enums.dart';
@@ -21,10 +23,14 @@ class InventoryProvider extends ChangeNotifier {
   bool _loading = false;
   String? _errorMessage;
 
+  List<String> _allFruitNames = const [];
+
   String? _categoryFilter; // fruit name; null = all
   ShelfLifeSort _sort = ShelfLifeSort.expirySoonest;
 
   AlertPreference _alertPreference = AlertPreference.before24h;
+
+  String _userId = '';
 
   bool get loading => _loading;
   String? get errorMessage => _errorMessage;
@@ -32,8 +38,28 @@ class InventoryProvider extends ChangeNotifier {
   String? get categoryFilter => _categoryFilter;
   AlertPreference get alertPreference => _alertPreference;
 
+  /// Called from the proxy provider in main.dart whenever AuthProvider
+  /// notifies. Clears silently, without notifyListeners: this runs
+  /// during a build and notifying there throws. The auth change is
+  /// already driving the rebuild.
+  void onUserChanged(String userId) {
+    if (_userId == userId) return;
+    _userId = userId;
+    _items = const [];
+    _categoryFilter = null;
+    _errorMessage = null;
+    _loading = false;
+    // _allFruitNames stays: it is the same list for everyone.
+  }
+
+  /// The filter list. Shows every supported fruit, with anything
+  /// already in the harvest folded in so an unsupported leftover row
+  /// is still filterable.
   List<String> get categories {
-    final set = <String>{for (final i in _items) i.fruitName};
+    final set = <String>{
+      ..._allFruitNames,
+      for (final i in _items) i.fruitName,
+    };
     final list = set.toList()..sort();
     return list;
   }
@@ -87,6 +113,21 @@ class InventoryProvider extends ChangeNotifier {
     } finally {
       _loading = false;
       notifyListeners();
+    }
+
+    // Separate and non-fatal: an empty filter list is a smaller
+    // problem than a failed inventory load, so it never sets
+    // _errorMessage.
+    await _loadFruitNames();
+  }
+
+  Future<void> _loadFruitNames() async {
+    if (_allFruitNames.isNotEmpty) return;
+    try {
+      _allFruitNames = await _service.fetchFruitTypeNames();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('InventoryProvider._loadFruitNames: $e');
     }
   }
 
@@ -149,9 +190,32 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> seedFakeItem() async {
+  /// Saves a scan result to the harvest. Returns true on success;
+  /// check [errorMessage] on failure.
+  ///
+  /// [imageFile] is the scanned photo. It gets uploaded to Storage so
+  /// the harvest card shows the real fruit.
+  Future<bool> addFromScan({
+    required String fruitName,
+    required RipenessStage stage,
+    required int daysUntilSpoil,
+    double? confidence,
+    String? justification,
+    File? imageFile,
+    RipenessStage? originalStage,
+    int quantity = 1,
+  }) async {
     try {
-      final item = await _service.seedFakeInventoryItem();
+      final item = await _service.addScannedFruit(
+        fruitName: fruitName,
+        stage: stage,
+        daysUntilSpoil: daysUntilSpoil,
+        confidence: confidence,
+        justification: justification,
+        imageFile: imageFile,
+        originalStage: originalStage,
+        quantity: quantity,
+      );
       _items = [item, ..._items];
       await _notifications.scheduleForItem(item, _alertPreference);
       notifyListeners();
@@ -160,6 +224,34 @@ class InventoryProvider extends ChangeNotifier {
       _errorMessage = e.message;
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<BatchSaveResult?> addBatchFromScan({
+    required List<BatchScanItem> items,
+    File? imageFile,
+  }) async {
+    try {
+      final result = await _service.addScannedBatch(
+        items: items,
+        imageFile: imageFile,
+      );
+
+      if (result.saved.isNotEmpty) {
+        // Newest first, same ordering addFromScan uses.
+        _items = [...result.saved.reversed, ..._items];
+
+        for (final item in result.saved) {
+          await _notifications.scheduleForItem(item, _alertPreference);
+        }
+        notifyListeners();
+      }
+
+      return result;
+    } on InventoryFailure catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return null;
     }
   }
 

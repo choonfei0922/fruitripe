@@ -1,16 +1,3 @@
-// lib/services/auth_service.dart
-//
-// MODIFIED for OTP signup verification.
-// Changes from the previous version:
-//   * register() now reports whether the email was already taken,
-//     using the identities trick (see comment below)
-//   * NEW verifySignUpOtp()
-//   * NEW resendSignUpOtp()
-//   * signIn() now handles the "email not confirmed" case
-//   * validation delegated to core/validators.dart
-//
-// Covers FR 1.1 - 1.6.
-
 import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -168,21 +155,66 @@ class AuthService {
     }
   }
 
-  Future<void> sendPasswordReset(
-      String email, {
-        String redirectTo = 'io.supabase.fruitripe://reset-callback',
-      }) async {
+  /// Sends a 6-digit recovery code instead of a magic link.
+  ///
+  /// Same Supabase call as the old link-based version - what makes it
+  /// a code is the email template. Authentication -> Emails -> Reset
+  /// Password must contain {{ .Token }}. If it only has
+  /// {{ .ConfirmationURL }} the user still gets a link and there is
+  /// nothing to type into the app.
+  ///
+  /// No redirectTo, because nothing comes back into the app by deep
+  /// link any more.
+  Future<void> sendPasswordResetOtp(String email) async {
     final emailError = Validators.email(email);
     if (emailError != null) throw AuthFailure(emailError);
 
     try {
-      await _client.auth.resetPasswordForEmail(
-        email.trim(),
-        redirectTo: redirectTo,
-      );
+      await _client.auth.resetPasswordForEmail(email.trim());
     } on AuthException catch (e) {
       throw AuthFailure(_friendlyAuthMessage(e));
     }
+  }
+
+  /// Verifies the recovery code and sets the new password.
+  ///
+  /// The two steps belong in one method: verifyOTP(recovery) opens a
+  /// short-lived recovery session, and updateUser only works while
+  /// that session is alive. Splitting them would leave the app in a
+  /// half-authenticated state between calls.
+  Future<void> resetPasswordWithOtp({
+    required String email,
+    required String token,
+    required String newPassword,
+  }) async {
+    final pwError = Validators.password(newPassword);
+    if (pwError != null) throw AuthFailure(pwError);
+
+    try {
+      final res = await _client.auth.verifyOTP(
+        type: OtpType.recovery,
+        email: email.trim(),
+        token: token.trim(),
+      );
+
+      if (res.session == null) {
+        throw const AuthFailure(
+          'That code is no longer valid. Please request a new one.',
+        );
+      }
+    } on AuthException catch (e) {
+      throw AuthFailure(_friendlyOtpMessage(e));
+    }
+
+    try {
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+    } on AuthException catch (e) {
+      throw AuthFailure(_friendlyAuthMessage(e));
+    }
+
+    // A recovery session is not a normal login. Drop it so the user
+    // signs in properly with the password they just set.
+    await _client.auth.signOut();
   }
 
   Future<void> updatePassword(String newPassword) async {
@@ -300,6 +332,10 @@ class AuthService {
     }
     if (raw.contains('password should be at least')) {
       return 'Password must be at least 6 characters.';
+    }
+    // Supabase rejects reusing the current password on a reset.
+    if (raw.contains('should be different')) {
+      return 'Your new password must be different from your current one.';
     }
     if (raw.contains('unable to validate email') ||
         raw.contains('invalid format')) {

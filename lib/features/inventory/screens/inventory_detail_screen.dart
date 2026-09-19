@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:fruitripe/core/enums.dart';
 import 'package:fruitripe/models/inventory_fruit.dart';
 import 'package:fruitripe/providers/inventory_provider.dart';
+import 'package:fruitripe/features/inventory/widgets/fruit_guide_card.dart';
+import 'package:fruitripe/features/inventory/widgets/fruit_image.dart';
 import 'package:fruitripe/features/inventory/widgets/shelf_life_bar.dart';
 
 class InventoryDetailScreen extends StatelessWidget {
@@ -35,6 +37,12 @@ class InventoryDetailScreen extends StatelessWidget {
         children: [
           _HeaderCard(item: item),
           const SizedBox(height: 16),
+
+          // Modules 2, 4 and 5 for this exact fruit at the ripeness it
+          // was scanned at.
+          FruitGuideCard(item: item),
+          const SizedBox(height: 16),
+
           _DetailCard(item: item),
           const SizedBox(height: 24),
           if (item.isActive)
@@ -65,7 +73,9 @@ class _HeaderCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _thumb(),
+              // Shared with the harvest card: real photo when the scan
+              // image reached Storage, fruit emoji otherwise.
+              FruitImage(item: item, size: 72, circle: false),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -89,31 +99,6 @@ class _HeaderCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _thumb() {
-    const size = 72.0;
-    if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Image.network(item.imageUrl!,
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _fallback(size)),
-      );
-    }
-    return _fallback(size);
-  }
-
-  Widget _fallback(double size) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      color: const Color(0xFFF2F6EF),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: const Icon(Icons.eco, color: Color(0xFF4CAF6D), size: 32),
-  );
 }
 
 class _DetailCard extends StatelessWidget {

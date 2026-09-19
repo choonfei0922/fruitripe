@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:fruitripe/core/enums.dart';
@@ -10,6 +12,40 @@ class InventoryFailure implements Exception {
   String toString() => message;
 }
 
+class BatchScanItem {
+  const BatchScanItem({
+    required this.fruitName,
+    required this.stage,
+    required this.daysUntilSpoil,
+    this.confidence,
+    this.justification,
+    this.originalStage,
+    this.boundingBox,
+    this.quantity = 1,
+  });
+
+  final String fruitName;
+  final RipenessStage stage;
+  final int daysUntilSpoil;
+  final double? confidence;
+  final String? justification;
+  final RipenessStage? originalStage;
+
+  final Map<String, dynamic>? boundingBox;
+
+  final int quantity;
+}
+
+class BatchSaveResult {
+  const BatchSaveResult({required this.saved, required this.failures});
+
+  final List<InventoryFruit> saved;
+  final List<String> failures;
+
+  int get savedCount => saved.length;
+  bool get hasFailures => failures.isNotEmpty;
+}
+
 class InventoryService {
   InventoryService({SupabaseClient? client})
       : _client = client ?? Supabase.instance.client;
@@ -17,6 +53,10 @@ class InventoryService {
   final SupabaseClient _client;
 
   String? get _uid => _client.auth.currentUser?.id;
+
+  /// Public bucket holding scan photos. Must exist in Supabase Storage
+  /// before uploads work - see the setup note in the chat.
+  static const String _scanBucket = 'scan-images';
 
   static const String _selectGraph = '''
         inv_id,
@@ -65,6 +105,25 @@ class InventoryService {
           .toList();
     } on PostgrestException catch (e) {
       throw InventoryFailure('Could not load your inventory: ${e.message}');
+    }
+  }
+
+  /// Every supported fruit, whether or not the user owns one. The
+  /// category filter uses this so all eight fruits are selectable
+  /// instead of only the ones already scanned.
+  Future<List<String>> fetchFruitTypeNames() async {
+    try {
+      final rows = await _client
+          .from('fruit_type')
+          .select('name')
+          .eq('is_supported', true)
+          .order('name');
+
+      return (rows as List)
+          .map((r) => (r as Map<String, dynamic>)['name'] as String)
+          .toList();
+    } on PostgrestException catch (e) {
+      throw InventoryFailure('Could not load the fruit list: ${e.message}');
     }
   }
 
@@ -184,28 +243,55 @@ class InventoryService {
     }
   }
 
-  Future<InventoryFruit> seedFakeInventoryItem({
-    String fruitName = 'Banana',
-    RipenessStage stage = RipenessStage.ripe,
-    int daysUntilSpoil = 3,
+  /// Saves a scan result to the database and adds it to the user's
+  /// inventory.
+  ///
+  /// ScanService keeps its results in memory only, so nothing the
+  /// scanner produces is persisted until this runs. It writes the
+  /// full chain the schema requires:
+  ///
+  ///   scan -> fruit -> analysis_result -> prediction -> inventory
+  ///
+  /// [fruitName] must be species only ("Apple"), not the raw YOLO
+  /// label ("Apple Ripe") - strip the stage suffix before calling.
+  /// [confidence] is 0.0-1.0 from the model; the column stores
+  /// 0-100, so it is scaled here.
+  /// [imageFile] is the photo the user scanned. It is uploaded to
+  /// Storage first so the harvest can show the real fruit instead of
+  /// a placeholder glyph.
+  Future<InventoryFruit> addScannedFruit({
+    required String fruitName,
+    required RipenessStage stage,
+    required int daysUntilSpoil,
+    double? confidence,
+    String? justification,
+    String? imageUrl,
+    File? imageFile,
+    RipenessStage? originalStage,
     int quantity = 1,
   }) async {
     final uid = _uid;
     if (uid == null) {
       throw const InventoryFailure('You need to be signed in.');
     }
+
+    // Outside the try below: a failed upload must not abort the save.
+    final uploadedUrl =
+    imageFile == null ? null : await _uploadScanImage(imageFile, uid);
+
     try {
-      // Resolve the fruit_type_id (and avg weight) by name.
       final ft = await _client
           .from('fruit_type')
           .select('fruit_type_id, average_weight_g')
-          .eq('name', fruitName)
+          .ilike('name', fruitName.trim())
           .maybeSingle();
+
       if (ft == null) {
         throw InventoryFailure(
-          'No fruit_type named "$fruitName". Seed fruit_type first.',
+          '$fruitName is not in the fruit list yet, so it cannot be tracked.',
         );
       }
+
       final fruitTypeId = (ft['fruit_type_id'] as num).toInt();
       final avgWeight = (ft['average_weight_g'] as num?)?.toDouble();
 
@@ -213,14 +299,13 @@ class InventoryService {
           .from('scan')
           .insert({
         'user_id': uid,
-        'image_url': 'https://placehold.co/400x400?text=$fruitName',
+        'image_url': uploadedUrl ?? imageUrl ?? 'scan://$fruitName',
         'is_batch': false,
       })
           .select('scan_id')
           .single();
       final scanId = (scan['scan_id'] as num).toInt();
 
-      // fruit
       final fruit = await _client
           .from('fruit')
           .insert({
@@ -237,15 +322,33 @@ class InventoryService {
           .insert({
         'fruit_id': fruitId,
         'ripeness_stage': stage.wire,
-        'confidence_score': 92.5,
-        'justification': 'Seeded item for development.',
+        // Model reports 0.0-1.0; the column has CHECK (0-100).
+        'confidence_score':
+        confidence == null ? 90.0 : (confidence * 100).clamp(0, 100),
+        'justification':
+        justification ?? 'Identified by on-device image analysis.',
       })
           .select('result_id')
           .single();
       final resultId = (analysis['result_id'] as num).toInt();
 
-      final now = DateTime.now();
-      final best = now.add(Duration(days: daysUntilSpoil));
+      if (originalStage != null && originalStage != stage) {
+        try {
+          await _client.from('user_feedback').upsert({
+            'result_id': resultId,
+            // NOT NULL in the schema, and the RLS policies compare it
+            // against auth.uid(), so the write fails without it.
+            'user_id': uid,
+            'corrected_stage': stage.wire,
+            'is_processed': false,
+          }, onConflict: 'result_id');
+        } on PostgrestException {
+          // Best-effort, like the image upload. Losing a correction
+          // shouldn't stop the fruit being tracked.
+        }
+      }
+      final best = DateTime.now().add(Duration(days: daysUntilSpoil));
+
       final prediction = await _client
           .from('prediction')
           .insert({
@@ -264,7 +367,167 @@ class InventoryService {
         estimatedWeightG: avgWeight == null ? null : avgWeight * quantity,
       );
     } on PostgrestException catch (e) {
-      throw InventoryFailure('Seeder failed: ${e.message}');
+      throw InventoryFailure('Could not save to your harvest: ${e.message}');
+    }
+  }
+
+  Future<BatchSaveResult> addScannedBatch({
+    required List<BatchScanItem> items,
+    File? imageFile,
+    String? imageUrl,
+  }) async {
+    final uid = _uid;
+    if (uid == null) {
+      throw const InventoryFailure('You need to be signed in.');
+    }
+    if (items.isEmpty) {
+      return const BatchSaveResult(saved: [], failures: []);
+    }
+
+    // Uploaded once for the whole batch, not per fruit.
+    final uploadedUrl =
+    imageFile == null ? null : await _uploadScanImage(imageFile, uid);
+
+    final int scanId;
+    try {
+      final scan = await _client
+          .from('scan')
+          .insert({
+        'user_id': uid,
+        'image_url': uploadedUrl ?? imageUrl ?? 'scan://batch',
+        'is_batch': true,
+      })
+          .select('scan_id')
+          .single();
+      scanId = (scan['scan_id'] as num).toInt();
+    } on PostgrestException catch (e) {
+      throw InventoryFailure('Could not start the batch save: ${e.message}');
+    }
+
+    final saved = <InventoryFruit>[];
+    final failures = <String>[];
+
+    for (final item in items) {
+      try {
+        final ft = await _client
+            .from('fruit_type')
+            .select('fruit_type_id, average_weight_g')
+            .ilike('name', item.fruitName.trim())
+            .maybeSingle();
+
+        if (ft == null) {
+          failures.add(item.fruitName);
+          continue;
+        }
+
+        final fruitTypeId = (ft['fruit_type_id'] as num).toInt();
+        final avgWeight = (ft['average_weight_g'] as num?)?.toDouble();
+
+        final fruit = await _client
+            .from('fruit')
+            .insert({
+          'scan_id': scanId,
+          'fruit_type_id': fruitTypeId,
+          // Real detector coordinates, unlike the single-scan path
+          // which has no box to work with.
+          'bounding_box':
+          item.boundingBox ?? {'x': 0, 'y': 0, 'w': 1, 'h': 1},
+        })
+            .select('fruit_id')
+            .single();
+        final fruitId = (fruit['fruit_id'] as num).toInt();
+
+        final analysis = await _client
+            .from('analysis_result')
+            .insert({
+          'fruit_id': fruitId,
+          'ripeness_stage': item.stage.wire,
+          // Model reports 0.0-1.0; the column has CHECK (0-100).
+          'confidence_score': item.confidence == null
+              ? 90.0
+              : (item.confidence! * 100).clamp(0, 100),
+          'justification': item.justification ??
+              'Identified by on-device image analysis.',
+        })
+            .select('result_id')
+            .single();
+        final resultId = (analysis['result_id'] as num).toInt();
+
+        if (item.originalStage != null && item.originalStage != item.stage) {
+          try {
+            await _client.from('user_feedback').upsert({
+              'result_id': resultId,
+              // NOT NULL in the schema, and the RLS policies compare it
+              // against auth.uid(), so the write fails without it.
+              'user_id': uid,
+              'corrected_stage': item.stage.wire,
+              'is_processed': false,
+            }, onConflict: 'result_id');
+          } on PostgrestException {
+            // Best-effort, like the image upload. Losing a correction
+            // shouldn't stop the fruit being tracked.
+          }
+        }
+
+        final best = DateTime.now().add(Duration(days: item.daysUntilSpoil));
+
+        final prediction = await _client
+            .from('prediction')
+            .insert({
+          'result_id': resultId,
+          'days_until_spoil': item.daysUntilSpoil,
+          'best_consume_date': _dateOnly(best),
+        })
+            .select('predict_id')
+            .single();
+        final predictId = (prediction['predict_id'] as num).toInt();
+
+        saved.add(await addToInventory(
+          predictId: predictId,
+          expiryDate: best,
+          quantity: item.quantity,
+          estimatedWeightG:
+          avgWeight == null ? null : avgWeight * item.quantity,
+        ));
+      } on InventoryFailure {
+        failures.add(item.fruitName);
+      } on PostgrestException {
+        failures.add(item.fruitName);
+      }
+    }
+
+    return BatchSaveResult(saved: saved, failures: failures);
+  }
+
+  /// Uploads the scan photo and returns its public URL, or null if
+  /// anything goes wrong. The photo is a nice-to-have: losing it must
+  /// never stop the fruit being tracked, so every failure is swallowed
+  /// and the caller falls back to the placeholder URL.
+  Future<String?> _uploadScanImage(File file, String uid) async {
+    try {
+      if (!await file.exists()) return null;
+
+      final raw = file.path.split('.').last.toLowerCase();
+      final ext = switch (raw) {
+        'png' => 'png',
+        'webp' => 'webp',
+        'jpeg' || 'jpg' => 'jpg',
+        _ => 'jpg',
+      };
+      final contentType = ext == 'jpg' ? 'image/jpeg' : 'image/$ext';
+
+      // Foldered by user id so the storage policy can scope writes.
+      final path = '$uid/${DateTime.now().millisecondsSinceEpoch}.$ext';
+
+      await _client.storage.from(_scanBucket).upload(
+        path,
+        file,
+        fileOptions: FileOptions(contentType: contentType, upsert: false),
+      );
+
+      return _client.storage.from(_scanBucket).getPublicUrl(path);
+    } catch (_) {
+      return null;
     }
   }
 

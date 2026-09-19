@@ -13,7 +13,6 @@ class RecipeListSection extends StatelessWidget {
 
   final FruitReference reference;
 
-  /// Called after a save toggle so the parent can refetch.
   final VoidCallback onChanged;
 
   @override

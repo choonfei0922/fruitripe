@@ -37,9 +37,10 @@ dependencies:
   supabase_flutter: ^2.15.4
   provider: ^6.1.5+1
   url_launcher: ^6.3.1
-  image_picker: 1.1.2
+  image_picker: ^1.1.2
   flutter_local_notifications: ^17.2.3
   timezone: ^0.9.4
+  ultralytics_yolo: ^0.6.11
 
 
 dev_dependencies:
@@ -63,6 +64,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/fruit_detector.tflite
+    - assets/labels.txt
 
   # To add assets to your application, add an assets section, like this:
   # assets:

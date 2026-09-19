@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fruitripe/core/enums.dart';
 import 'package:fruitripe/models/inventory_fruit.dart';
+import 'package:fruitripe/features/inventory/widgets/fruit_image.dart';
 import 'package:fruitripe/features/inventory/widgets/shelf_life_bar.dart';
 
 class FruitCard extends StatelessWidget {
@@ -14,109 +15,142 @@ class FruitCard extends StatelessWidget {
   final InventoryFruit item;
   final VoidCallback? onTap;
 
+  static const _ink = Color(0xFF14261C);
+  static const _muted = Color(0xFF6B7F70);
+  static const _critical = Color(0xFFC0392B);
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(
-          color: item.isCritical
-              ? const Color(0xFFE8933D)
-              : const Color(0xFFDCE5DA),
-          width: item.isCritical ? 1.5 : 1,
-        ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              _Thumb(item: item),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.fruitName,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1E3527),
+    final days = item.daysRemaining;
+    final accent = item.isCritical
+        ? _critical
+        : ShelfLifeBar.colorForFraction(item.lifeElapsedFraction);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(26),
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: item.isCritical
+                    ? const Color(0xFFF0C4BE)
+                    : const Color(0xFFE2EADF),
+                width: item.isCritical ? 1.4 : 1,
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: 132,
+                  height: 132,
+                  child: Stack(
+                    children: [
+                      FruitImage(item: item, size: 132),
+                      if (item.isCritical)
+                        Positioned(
+                          right: 2,
+                          top: 2,
+                          child: Container(
+                            width: 26,
+                            height: 26,
+                            decoration: const BoxDecoration(
+                              color: _critical,
+                              shape: BoxShape.circle,
                             ),
+                            child: const Icon(Icons.priority_high,
+                                size: 16, color: Colors.white),
                           ),
                         ),
-                        if (item.quantity > 1)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF2F6EF),
-                              borderRadius: BorderRadius.circular(20),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.fruitName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              height: 1.1,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
+                              color: _ink,
                             ),
-                            child: Text('×${item.quantity}',
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF5F7264))),
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            item.quantity > 1
+                                ? '${item.ripenessStage.label}  ·  ×${item.quantity}'
+                                : item.ripenessStage.label,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: _muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          _expiryCaption(days),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            letterSpacing: 0.8,
+                            fontWeight: FontWeight.w600,
+                            color: _muted,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _expiryValue(days),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
+                            color: accent,
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item.ripenessStage.label,
-                      style: const TextStyle(
-                          fontSize: 12.5, color: Color(0xFF5F7264)),
-                    ),
-                    const SizedBox(height: 10),
-                    ShelfLifeBar(item: item),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                ShelfLifeBar(item: item, height: 6, showLabel: false),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
 
-class _Thumb extends StatelessWidget {
-  const _Thumb({required this.item});
-  final InventoryFruit item;
-
-  @override
-  Widget build(BuildContext context) {
-    const size = 56.0;
-    if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Image.network(
-          item.imageUrl!,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _fallback(size),
-        ),
-      );
-    }
-    return _fallback(size);
+  static String _expiryCaption(int days) {
+    if (days < 0) return 'EXPIRED';
+    if (days == 0) return 'EAT';
+    return 'EXPIRES IN';
   }
 
-  Widget _fallback(double size) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      color: const Color(0xFFF2F6EF),
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: const Icon(Icons.eco, color: Color(0xFF4CAF6D)),
-  );
+  static String _expiryValue(int days) {
+    if (days < 0) return 'Past best';
+    if (days == 0) return 'Today';
+    if (days == 1) return '1 day';
+    return '$days days';
+  }
 }

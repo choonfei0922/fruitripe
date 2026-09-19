@@ -8,9 +8,10 @@ import 'package:fruitripe/core/validators.dart';
 import 'package:fruitripe/providers/auth_provider.dart';
 import 'package:fruitripe/features/auth/widgets/auth_error_banner.dart';
 
+/// MUST match Authentication -> Email -> "Email OTP length".
+const int kOtpLength = 6;
 
-const int kOtpLength = 8;
-
+/// Supabase rate-limits resend requests. 60s is the default.
 const int kResendCooldownSeconds = 60;
 
 class VerifyOtpScreen extends StatefulWidget {
@@ -30,14 +31,29 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   @override
   void initState() {
     super.initState();
+    // A code was just sent when this screen opened, so start the
+    // cooldown immediately.
     _startCooldown();
+    // Rebuild on every keystroke so the counter and border update.
+    _otpCtrl.addListener(_onChanged);
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _otpCtrl.removeListener(_onChanged);
     _otpCtrl.dispose();
     super.dispose();
+  }
+
+  void _onChanged() {
+    setState(() {});
+    // Auto-submit once the last digit lands - saves the user
+    // reaching for the button.
+    if (_otpCtrl.text.length == kOtpLength) {
+      FocusScope.of(context).unfocus();
+      _verify();
+    }
   }
 
   void _startCooldown() {
@@ -60,9 +76,15 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     final ok =
     await context.read<AuthProvider>().verifySignUpOtp(_otpCtrl.text);
 
-    if (!mounted || !ok) return;
+    if (!mounted) return;
 
-    // Pop back past the register screen to login.
+    if (!ok) {
+      // Wrong code - clear it so they are not editing around a
+      // stale value.
+      _otpCtrl.clear();
+      return;
+    }
+
     Navigator.of(context).popUntil((route) => route.isFirst);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -90,6 +112,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     final auth = context.watch<AuthProvider>();
     final email = auth.pendingEmail ?? 'your email';
     final canResend = _secondsLeft <= 0 && !auth.busy;
+
+    final entered = _otpCtrl.text.length;
+    final complete = entered == kOtpLength;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Verify Email')),
@@ -126,8 +151,8 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                               text: 'We sent a $kOtpLength-digit code to\n'),
                           TextSpan(
                             text: email,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold),
+                            style:
+                            const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -142,31 +167,57 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                       maxLength: kOtpLength,
                       autofocus: true,
                       style: const TextStyle(
-                        fontSize: 26,
-                        letterSpacing: 8,
+                        fontSize: 28,
+                        letterSpacing: 12,
                         fontWeight: FontWeight.bold,
                       ),
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
                       ],
                       decoration: InputDecoration(
+                        // No hintText. A row of zeros reads like the
+                        // field is already filled in.
                         border: const OutlineInputBorder(),
                         counterText: '',
-                        hintText: '0' * kOtpLength,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 20,
+                          horizontal: 12,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: complete
+                                ? const Color(0xFF1B5E3F)
+                                : Colors.grey.shade400,
+                            width: complete ? 2 : 1,
+                          ),
+                        ),
                       ),
                       validator: (v) =>
                           Validators.otp(v, length: kOtpLength),
-                      onFieldSubmitted: (_) => _verify(),
+                    ),
+
+                    const SizedBox(height: 8),
+                    // Shows progress honestly instead of a fake value.
+                    Text(
+                      complete
+                          ? 'Checking your code...'
+                          : '$entered of $kOtpLength digits entered',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: complete ? const Color(0xFF1B5E3F) : null,
+                        fontWeight:
+                        complete ? FontWeight.bold : FontWeight.normal,
+                      ),
                     ),
 
                     if (auth.errorMessage != null) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       AuthErrorBanner(message: auth.errorMessage!),
                     ],
 
                     const SizedBox(height: 24),
                     FilledButton(
-                      onPressed: auth.busy ? null : _verify,
+                      onPressed: (auth.busy || !complete) ? null : _verify,
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),

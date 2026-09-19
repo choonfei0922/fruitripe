@@ -44,6 +44,7 @@ class AnalyticsService {
         parsed,
         batchScanCount: scanCounts.$1,
         totalScanCount: scanCounts.$2,
+        batchFruitCount: scanCounts.$3,
       );
     } on PostgrestException catch (e) {
       // 42P01 = relation does not exist.
@@ -56,22 +57,34 @@ class AnalyticsService {
     }
   }
 
-  Future<(int, int)> _fetchScanCounts() async {
+  Future<(int, int, int)> _fetchScanCounts() async {
     final uid = _uid;
-    if (uid == null) return (0, 0);
+    if (uid == null) return (0, 0, 0);
 
     try {
       final rows = await _client
           .from('scan')
-          .select('scan_id, is_batch')
+          .select('scan_id, is_batch, fruit(fruit_id)')
           .eq('user_id', uid);
 
       final list = rows as List;
-      final batch = list.where((r) => r['is_batch'] == true).length;
-      return (batch, list.length);
+      var batch = 0;
+      var batchFruit = 0;
+
+      for (final row in list) {
+        final map = row as Map<String, dynamic>;
+        if (map['is_batch'] == true) {
+          batch++;
+          // Null when a batch scan somehow has no fruit rows - a
+          // failed save partway through the chain, say.
+          batchFruit += (map['fruit'] as List?)?.length ?? 0;
+        }
+      }
+
+      return (batch, list.length, batchFruit);
     } on PostgrestException {
       // Table empty, missing, or blocked - not worth failing over.
-      return (0, 0);
+      return (0, 0, 0);
     }
   }
 

@@ -10,15 +10,19 @@ import 'package:fruitripe/features/storage_recipe_nutrition/widgets/nutrition_se
 import 'package:fruitripe/features/storage_recipe_nutrition/widgets/recipe_list_section.dart';
 import 'package:fruitripe/features/storage_recipe_nutrition/widgets/storage_section.dart';
 
+enum FruitGuideTab { storage, nutrition, recipes }
+
 class FruitDetailScreen extends StatefulWidget {
   const FruitDetailScreen({
     super.key,
     required this.fruitType,
     required this.stage,
+    this.initialTab = FruitGuideTab.storage,
   });
 
   final FruitType fruitType;
   final RipenessStage stage;
+  final FruitGuideTab initialTab;
 
   @override
   State<FruitDetailScreen> createState() => _FruitDetailScreenState();
@@ -58,6 +62,7 @@ class _FruitDetailScreenState extends State<FruitDetailScreen> {
 
     return DefaultTabController(
       length: 3,
+      initialIndex: widget.initialTab.index,
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.fruitType.name),

@@ -195,8 +195,8 @@ class _BatchSummary extends StatelessWidget {
           const SizedBox(height: 12),
           if (total == 0)
             Text(
-              'No scans recorded yet. Once scanning is connected, your '
-                  'single and multi-fruit scan counts will appear here.',
+              'No scans yet. Scan some fruit and your totals will '
+                  'appear here.',
               style: Theme.of(context).textTheme.bodySmall,
             )
           else
@@ -221,9 +221,9 @@ class _BatchSummary extends StatelessWidget {
                 Expanded(
                   child: _MiniStat(
                     label: 'Avg per batch',
-                    value: batch == 0
+                    value: summary.averageBatchSize == null
                         ? '—'
-                        : (summary.totalResolved / batch).toStringAsFixed(1),
+                        : summary.averageBatchSize!.toStringAsFixed(1),
                     icon: Icons.calculate_outlined,
                   ),
                 ),

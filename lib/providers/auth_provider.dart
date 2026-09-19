@@ -26,6 +26,10 @@ class AuthProvider extends ChangeNotifier {
   bool _busy = false;
   String? _pendingEmail;
 
+  /// The address a password reset code was sent to. Held here so the
+  /// OTP screen does not have to ask for the email a second time.
+  String? _recoveryEmail;
+
   AuthStatus get status => _status;
   AppUser? get profile => _profile;
   String? get errorMessage => _errorMessage;
@@ -33,6 +37,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isSignedIn => _status == AuthStatus.authenticated;
 
   String? get pendingEmail => _pendingEmail;
+  String? get recoveryEmail => _recoveryEmail;
 
   Future<void> _bootstrap() async {
     if (_service.isSignedIn) {
@@ -151,8 +156,58 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
-  Future<bool> sendPasswordReset(String email) =>
-      _run(() => _service.sendPasswordReset(email));
+  // ---------------------------------------------------------------
+  // Password reset by OTP (replaces the old emailed link)
+  // ---------------------------------------------------------------
+
+  Future<bool> sendPasswordResetOtp(String email) async {
+    final ok = await _run(() => _service.sendPasswordResetOtp(email));
+    if (ok) _recoveryEmail = email.trim();
+    return ok;
+  }
+
+  Future<bool> resendPasswordResetOtp() {
+    final email = _recoveryEmail;
+    if (email == null) {
+      _errorMessage = 'Please enter your email again.';
+      notifyListeners();
+      return Future.value(false);
+    }
+    return _run(() => _service.sendPasswordResetOtp(email));
+  }
+
+  Future<bool> resetPasswordWithOtp({
+    required String token,
+    required String newPassword,
+  }) async {
+    final email = _recoveryEmail;
+    if (email == null) {
+      _errorMessage = 'Please request a new code.';
+      notifyListeners();
+      return false;
+    }
+
+    final ok = await _run(() => _service.resetPasswordWithOtp(
+      email: email,
+      token: token,
+      newPassword: newPassword,
+    ));
+
+    if (ok) {
+      // The service already signed the recovery session out, so mirror
+      // that here rather than waiting for the auth state listener.
+      _recoveryEmail = null;
+      _profile = null;
+      _status = AuthStatus.unauthenticated;
+    }
+    return ok;
+  }
+
+  void clearRecoveryEmail() {
+    if (_recoveryEmail == null) return;
+    _recoveryEmail = null;
+    notifyListeners();
+  }
 
   Future<bool> updatePassword(String newPassword) =>
       _run(() => _service.updatePassword(newPassword));
