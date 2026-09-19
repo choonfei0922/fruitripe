@@ -26,8 +26,6 @@ class AuthProvider extends ChangeNotifier {
   bool _busy = false;
   String? _pendingEmail;
 
-  /// The address a password reset code was sent to. Held here so the
-  /// OTP screen does not have to ask for the email a second time.
   String? _recoveryEmail;
 
   AuthStatus get status => _status;
@@ -156,10 +154,6 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
-  // ---------------------------------------------------------------
-  // Password reset by OTP (replaces the old emailed link)
-  // ---------------------------------------------------------------
-
   Future<bool> sendPasswordResetOtp(String email) async {
     final ok = await _run(() => _service.sendPasswordResetOtp(email));
     if (ok) _recoveryEmail = email.trim();
@@ -194,8 +188,6 @@ class AuthProvider extends ChangeNotifier {
     ));
 
     if (ok) {
-      // The service already signed the recovery session out, so mirror
-      // that here rather than waiting for the auth state listener.
       _recoveryEmail = null;
       _profile = null;
       _status = AuthStatus.unauthenticated;

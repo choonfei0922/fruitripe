@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fruitripe/models/waste_summary.dart';
 
+// FR 6.3 (Summary)
 class FruitBreakdown extends StatelessWidget {
   const FruitBreakdown({super.key, required this.summary});
 

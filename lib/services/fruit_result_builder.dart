@@ -29,7 +29,6 @@ class FruitResultBuildException implements Exception {
 }
 
 /// Runs identify-label → parse → ripeness → shelf-life for a single
-/// detected fruit candidate. Shared by ScanService and BatchAnalysisService.
 class FruitResultBuilder {
   final RipenessAnalyzer? _ripenessAnalyzer;
   final ShelfLifePredictor _shelfLifePredictor;

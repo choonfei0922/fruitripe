@@ -47,8 +47,7 @@ class _FruitDetailScreenState extends State<FruitDetailScreen> {
     );
   }
 
-  /// Lets you flip between stages without going back. Handy for a
-  /// demo, and it is how the maturation comparison is explored.
+  /// FR 4.2 (Nutrition) — flip between stages for the maturation comparison.
   void _changeStage(RipenessStage stage) {
     setState(() {
       _stage = stage;

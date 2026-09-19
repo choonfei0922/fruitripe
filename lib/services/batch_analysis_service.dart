@@ -27,8 +27,6 @@ class BatchFailed extends BatchOutcome {
 }
 
 /// Orchestrates the Multi-Fruit Batch Analysis Module (UC400/UC401).
-/// Runs the same per-fruit pipeline as ScanService (via FruitResultBuilder)
-/// for EVERY candidate the identifier returns, not just the first.
 class BatchAnalysisService {
   final FruitIdentifier _identifier;
   final FruitResultBuilder _resultBuilder;
@@ -75,9 +73,6 @@ class BatchAnalysisService {
           );
           results.add(result);
         } on FruitResultBuildException {
-          // Skip the one fruit that couldn't be classified rather than
-          // failing the whole batch — a partial result is more useful to
-          // the user than none.
           continue;
         }
       }

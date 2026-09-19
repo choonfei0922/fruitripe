@@ -295,13 +295,7 @@ class _ProcessingView extends StatelessWidget {
   }
 }
 
-/// UC102 — matches Figure 4.2's photo-plus-status-card layout.
-///
-/// The card half is scrollable. The screen sits inside HomeShell's
-/// Scaffold, so the NavigationBar has already taken ~80px before this
-/// widget gets any height, and the card content changes size depending
-/// on whether the fruit has been added to the harvest yet. A fixed
-/// Column overflowed the bottom in both states.
+/// UC102 — scan result: photo plus status card.
 class _SuccessView extends StatelessWidget {
   final ScanSessionProvider session;
   const _SuccessView({required this.session});
@@ -392,8 +386,6 @@ class _SuccessView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Tappable: opens the confidence and explanation
-                      // screen (FR 5.2, 5.3).
                       ConfidenceBadge(
                         analysisResult: analysis,
                         fruitType: parseFruitLabel(fruit.type).fruitType,
@@ -415,28 +407,18 @@ class _SuccessView extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
 
-                  // Persists the scan and puts it in Your Harvest.
-                  // fruit.type carries the stage suffix from the YOLO
-                  // label ("Apple Ripe"), but fruit_type.name in the
-                  // database is species only - so strip it first.
                   AddToHarvestButton(
                     fruitName: parseFruitLabel(fruit.type).fruitType,
                     stage: analysis.ripenessStage,
                     daysUntilSpoil: session.prediction!.daysUntilSpoil,
                     confidence: confidence,
                     justification: analysis.justification,
-                    // Uploaded to Storage on save so the harvest card
-                    // shows this photo instead of a placeholder glyph.
                     imageFile: image,
                     originalStage: session.originalStage,
                   ),
 
                   const SizedBox(height: 10),
 
-                  // Opens Modules 2, 4 and 5 for this fruit at the
-                  // ripeness the scanner detected. Without this the
-                  // storage, nutrition and recipe screens have no
-                  // route into them from anywhere in the app.
                   FruitGuideButton(
                     fruitTypeName: parseFruitLabel(fruit.type).fruitType,
                     stage: analysis.ripenessStage,

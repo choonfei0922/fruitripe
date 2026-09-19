@@ -7,6 +7,8 @@ import 'package:fruitripe/providers/auth_provider.dart';
 import 'package:fruitripe/features/auth/widgets/auth_error_banner.dart';
 import 'package:fruitripe/features/auth/widgets/profile_avatar.dart';
 
+
+/// FR 1.5, FR 1.6 (Account) — update username and profile picture.
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 

@@ -91,8 +91,6 @@ class ScanSessionProvider extends ChangeNotifier {
       userId: _userId,
     );
 
-    // The account could have changed while the model was running.
-    // Dropping the result is better than showing it to the wrong user.
     if (_capturedImage != image) return;
 
     switch (outcome) {
@@ -136,12 +134,8 @@ class ScanSessionProvider extends ChangeNotifier {
       return;
     }
 
-    // Only record the first correction as the original. Correcting
-    // twice shouldn't make the second correction the "model's answer".
     _originalStage ??= current.ripenessStage;
 
-    // If they land back on what the model said, it's no longer a
-    // correction at all.
     if (_originalStage == correctedStage) {
       _originalStage = null;
     }
@@ -149,9 +143,6 @@ class ScanSessionProvider extends ChangeNotifier {
     _analysisResult = AnalysisResult(
       resultId: current.resultId,
       ripenessStage: correctedStage,
-      // The model's confidence described its own answer, not this one.
-      // Carrying it over would show "94% confident" next to a stage the
-      // model never picked.
       confidenceScore: _originalStage == null ? current.confidenceScore : 1.0,
       justification: _originalStage == null
           ? current.justification
@@ -177,9 +168,7 @@ class ScanSessionProvider extends ChangeNotifier {
     RipenessStage.overripe => 'Overripe',
     RipenessStage.rotten => 'Rotten',
   };
-  
-  /// Returns to the scan screen's initial state — both UC101 alternative
-  /// flows end with a button back to "SCAN FRUIT".
+
   void reset() {
     _clear();
     notifyListeners();

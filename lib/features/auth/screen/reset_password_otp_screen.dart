@@ -11,6 +11,7 @@ import 'package:fruitripe/features/auth/widgets/auth_error_banner.dart';
 const int kResetOtpLength = 6;
 const int kResetResendCooldownSeconds = 60;
 
+/// FR 1.4 (Account) — reset password via email, code + new password.
 class ResetPasswordOtpScreen extends StatefulWidget {
   const ResetPasswordOtpScreen({super.key});
 
@@ -69,8 +70,6 @@ class _ResetPasswordOtpScreenState extends State<ResetPasswordOtpScreen> {
     if (!mounted) return;
 
     if (!ok) {
-      // Keep the password fields, clear the code - a wrong or
-      // expired code is the usual failure.
       _otpCtrl.clear();
       return;
     }

@@ -1,5 +1,7 @@
 import '../core/enums.dart';
 
+/// Parsed identifier label. `ripenessStage` is null when the label carries
+/// no recognized stage suffix.
 class ParsedFruitLabel {
   final String fruitType;
   final RipenessStage? ripenessStage;

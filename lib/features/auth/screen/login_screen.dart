@@ -15,6 +15,7 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
+/// FR 1.2 (Account) — login.
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
@@ -114,9 +115,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               setState(() => _obscure = !_obscure),
                         ),
                       ),
-                      // Not Validators.password - an existing account
-                      // may predate the current rules. Only check that
-                      // something was typed; the server decides.
                       validator: (v) => (v ?? '').isEmpty
                           ? 'Please enter your password.'
                           : null,
@@ -144,8 +142,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (auth.errorMessage != null) ...[
                       const SizedBox(height: 4),
                       AuthErrorBanner(message: auth.errorMessage!),
-                      // Registered but never verified - give them a
-                      // way forward rather than a dead end.
                       if (auth.errorIsUnconfirmedEmail)
                         Align(
                           alignment: Alignment.centerLeft,

@@ -8,6 +8,7 @@ import 'package:fruitripe/services/information_service.dart';
 import 'package:fruitripe/features/storage_recipe_nutrition/screens/recipe_detail_screen.dart';
 import 'package:fruitripe/features/storage_recipe_nutrition/widgets/recipe_card.dart';
 
+/// FR 5.2 (Recipe) — search recipes for imperfect produce.
 class RecipeSearchScreen extends StatefulWidget {
   const RecipeSearchScreen({super.key});
 
@@ -40,8 +41,6 @@ class _RecipeSearchScreenState extends State<RecipeSearchScreen> {
     super.dispose();
   }
 
-  /// Waits 350ms after the last keystroke before querying, so
-  /// typing "banana" fires one request rather than six.
   void _onQueryChanged(String _) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 350), _search);

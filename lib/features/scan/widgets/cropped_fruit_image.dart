@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fruitripe/models/fruit.dart';
 
+/// FR 4.3 (Batch) — crops one detection out of the batch photo.
 class CroppedFruitImage extends StatelessWidget {
   const CroppedFruitImage({
     super.key,

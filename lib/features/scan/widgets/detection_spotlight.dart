@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fruitripe/models/fruit.dart';
 
+/// FR 4.3 (Batch) — highlights one detection within the batch photo.
 class DetectionSpotlight extends StatefulWidget {
   const DetectionSpotlight({
     super.key,
@@ -91,8 +92,6 @@ class _DetectionSpotlightState extends State<DetectionSpotlight> {
       );
     }
 
-    // Still measuring - show the photo plainly rather than flashing
-    // brackets into the wrong spot.
     if (aspect == null) {
       return Image.file(file, fit: BoxFit.contain);
     }
@@ -143,22 +142,18 @@ class _SpotlightPainter extends CustomPainter {
       const Radius.circular(10),
     );
 
-    // Dim everything except the detection: fill the whole canvas, then
-    // punch the box out with evenOdd.
     final shade = Path()
       ..addRect(Offset.zero & size)
       ..addRRect(rounded)
       ..fillType = PathFillType.evenOdd;
     canvas.drawPath(shade, Paint()..color = Colors.black.withOpacity(dim));
 
-    // Corner brackets, matching the scan viewfinder.
     final stroke = Paint()
       ..color = accent
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
-    // Short enough not to meet on a small box.
     final len = (rect.shortestSide * 0.22).clamp(8.0, 28.0);
     final r = rounded.outerRect;
 

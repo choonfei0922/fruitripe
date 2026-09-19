@@ -14,6 +14,7 @@ const int kOtpLength = 6;
 /// Supabase rate-limits resend requests. 60s is the default.
 const int kResendCooldownSeconds = 60;
 
+/// FR 1.1 (Account) — email OTP confirming registration.
 class VerifyOtpScreen extends StatefulWidget {
   const VerifyOtpScreen({super.key});
 
@@ -31,10 +32,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   @override
   void initState() {
     super.initState();
-    // A code was just sent when this screen opened, so start the
-    // cooldown immediately.
     _startCooldown();
-    // Rebuild on every keystroke so the counter and border update.
     _otpCtrl.addListener(_onChanged);
   }
 
@@ -48,8 +46,6 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
 
   void _onChanged() {
     setState(() {});
-    // Auto-submit once the last digit lands - saves the user
-    // reaching for the button.
     if (_otpCtrl.text.length == kOtpLength) {
       FocusScope.of(context).unfocus();
       _verify();
@@ -79,8 +75,6 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     if (!mounted) return;
 
     if (!ok) {
-      // Wrong code - clear it so they are not editing around a
-      // stale value.
       _otpCtrl.clear();
       return;
     }
@@ -175,8 +169,6 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                         FilteringTextInputFormatter.digitsOnly,
                       ],
                       decoration: InputDecoration(
-                        // No hintText. A row of zeros reads like the
-                        // field is already filled in.
                         border: const OutlineInputBorder(),
                         counterText: '',
                         contentPadding: const EdgeInsets.symmetric(
@@ -197,7 +189,6 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                     ),
 
                     const SizedBox(height: 8),
-                    // Shows progress honestly instead of a fake value.
                     Text(
                       complete
                           ? 'Checking your code...'

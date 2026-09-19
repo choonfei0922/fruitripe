@@ -6,6 +6,7 @@ import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 import '../models/fruit.dart';
 import 'fruit_identifier.dart';
 
+/// FR 1.2, FR 1.3 (Identification) — YOLO detection, 8 species × 4 stages.
 class IdentifierUnavailable implements Exception {
   const IdentifierUnavailable(this.message, [this.technical]);
   final String message;

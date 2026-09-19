@@ -39,11 +39,6 @@ class FruitRipeApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-
-        // Every provider that holds per-user data is a proxy on
-        // AuthProvider. These live above AuthGate, so they survive a
-        // sign-out - which means without this they would hand the next
-        // account the previous account's data.
         ChangeNotifierProxyProvider<AuthProvider, InventoryProvider>(
           create: (_) => InventoryProvider(),
           update: (_, auth, inv) {
@@ -62,12 +57,7 @@ class FruitRipeApp extends StatelessWidget {
           },
         ),
 
-        // Module 3 (scan). Kept decoupled from the auth module: the scan
-        // provider never imports AuthProvider, it just gets told who is
-        // logged in. This proxy does the telling, and re-fires whenever
-        // AuthProvider notifies — so signing out and back in as someone
-        // else updates the id and wipes the old session instead of
-        // leaving the previous user's result on screen.
+        // Fruit Identification Module (KH 1.0). Kept decoupled from auth: the scan
         ChangeNotifierProxyProvider<AuthProvider, ScanSessionProvider>(
           create: (_) => ScanSessionProvider(),
           update: (_, auth, scan) {

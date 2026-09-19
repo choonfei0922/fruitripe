@@ -8,18 +8,11 @@ import 'package:fruitripe/features/inventory/widgets/critical_window_banner.dart
 import 'package:fruitripe/features/inventory/widgets/fruit_card.dart';
 import 'package:fruitripe/features/notifications/screens/notification_list_screen.dart';
 
-/// Module 3 — Your Harvest.
-///
-/// No AppBar: the title block scrolls with the content, which is what
-/// gives the screen its editorial feel. The bell moved into that block,
-/// and the sort menu now lives behind the "Shelf-life" pill.
-///
-/// The debug "Seed fruit" FAB is gone. The FAB here goes to the Scan tab.
+/// Shelf-Life Tracking & Notification Module (3.0) — Your Harvest.
+
 class InventoryListScreen extends StatefulWidget {
   const InventoryListScreen({super.key, this.onScanRequested});
 
-  /// Jumps to the Scan tab. HomeShell owns the tab index, so it passes
-  /// this in rather than this screen reaching up into the navigation.
   final VoidCallback? onScanRequested;
 
   @override
@@ -175,11 +168,7 @@ class _InventoryListScreenState extends State<InventoryListScreen> {
     ShelfLifeSort.recentlyAdded => 'Recently added',
   };
 
-  /// All eight fruits are listed here, not just the ones owned, so the
-  /// list is long enough to need scrolling. isScrollControlled lifts
-  /// the sheet's default height cap and Flexible lets the list take
-  /// whatever is left after the title — without both, the Column
-  /// overflows the sheet.
+  /// isScrollControlled + Flexible, or the Column overflows the sheet.
   Future<void> _pickCategory(
       BuildContext context,
       InventoryProvider inv,

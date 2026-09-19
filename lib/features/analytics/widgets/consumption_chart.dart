@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fruitripe/models/waste_summary.dart';
 
+// FR 6.1 (Summary)
 class ConsumptionChart extends StatelessWidget {
   const ConsumptionChart({super.key, required this.months});
 

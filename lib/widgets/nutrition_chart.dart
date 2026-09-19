@@ -26,11 +26,9 @@ class NutrientBarChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (values.isEmpty) return const SizedBox.shrink();
 
-    // Guard against divide-by-zero when every value is 0.
     final maxValue = values.values.fold<double>(0, (a, b) => b > a ? b : a);
     final safeMax = maxValue <= 0 ? 1.0 : maxValue;
 
-    // Keep the ripening order, not map insertion order.
     final ordered = RipenessStage.values
         .where((s) => values.containsKey(s))
         .toList();

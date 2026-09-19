@@ -37,9 +37,6 @@ class InventoryDetailScreen extends StatelessWidget {
         children: [
           _HeaderCard(item: item),
           const SizedBox(height: 16),
-
-          // Modules 2, 4 and 5 for this exact fruit at the ripeness it
-          // was scanned at.
           FruitGuideCard(item: item),
           const SizedBox(height: 16),
 
@@ -73,8 +70,6 @@ class _HeaderCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Shared with the harvest card: real photo when the scan
-              // image reached Storage, fruit emoji otherwise.
               FruitImage(item: item, size: 72, circle: false),
               const SizedBox(width: 16),
               Expanded(

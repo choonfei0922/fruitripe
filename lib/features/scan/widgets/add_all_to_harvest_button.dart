@@ -40,10 +40,7 @@ class _AddAllToHarvestButtonState extends State<AddAllToHarvestButton> {
   Future<void> _addAll() async {
     setState(() => _busy = true);
 
-    // Indexed rather than _addable.map: filtering first loses the
-    // position, and originalStages is keyed by position in results.
-    // Mapping over the filtered list would line corrections up against
-    // the wrong fruit as soon as one rotten item is skipped.
+    // Indexed, not filtered — originalStages is keyed by position.
     final items = <BatchScanItem>[];
     for (var i = 0; i < widget.results.length; i++) {
       final r = widget.results[i];
@@ -66,7 +63,6 @@ class _AddAllToHarvestButtonState extends State<AddAllToHarvestButton> {
           'w': box.width,
           'h': box.height,
         },
-        // One detection is one fruit, so no quantity picker here.
         quantity: 1,
       ));
     }
@@ -87,10 +83,6 @@ class _AddAllToHarvestButtonState extends State<AddAllToHarvestButton> {
 
     setState(() => _busy = false);
 
-    // Recorded on the session, not here: this widget is destroyed and
-    // rebuilt whenever the user opens a fruit and comes back, which
-    // would otherwise re-enable the button and let them save the same
-    // batch twice.
     if (result.savedCount > 0) {
       context.read<BatchAnalysisProvider>().markAllSavedToHarvest();
     }

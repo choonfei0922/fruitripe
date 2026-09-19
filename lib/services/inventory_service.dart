@@ -54,8 +54,6 @@ class InventoryService {
 
   String? get _uid => _client.auth.currentUser?.id;
 
-  /// Public bucket holding scan photos. Must exist in Supabase Storage
-  /// before uploads work - see the setup note in the chat.
   static const String _scanBucket = 'scan-images';
 
   static const String _selectGraph = '''
@@ -108,9 +106,6 @@ class InventoryService {
     }
   }
 
-  /// Every supported fruit, whether or not the user owns one. The
-  /// category filter uses this so all eight fruits are selectable
-  /// instead of only the ones already scanned.
   Future<List<String>> fetchFruitTypeNames() async {
     try {
       final rows = await _client
@@ -243,22 +238,6 @@ class InventoryService {
     }
   }
 
-  /// Saves a scan result to the database and adds it to the user's
-  /// inventory.
-  ///
-  /// ScanService keeps its results in memory only, so nothing the
-  /// scanner produces is persisted until this runs. It writes the
-  /// full chain the schema requires:
-  ///
-  ///   scan -> fruit -> analysis_result -> prediction -> inventory
-  ///
-  /// [fruitName] must be species only ("Apple"), not the raw YOLO
-  /// label ("Apple Ripe") - strip the stage suffix before calling.
-  /// [confidence] is 0.0-1.0 from the model; the column stores
-  /// 0-100, so it is scaled here.
-  /// [imageFile] is the photo the user scanned. It is uploaded to
-  /// Storage first so the harvest can show the real fruit instead of
-  /// a placeholder glyph.
   Future<InventoryFruit> addScannedFruit({
     required String fruitName,
     required RipenessStage stage,
@@ -275,7 +254,6 @@ class InventoryService {
       throw const InventoryFailure('You need to be signed in.');
     }
 
-    // Outside the try below: a failed upload must not abort the save.
     final uploadedUrl =
     imageFile == null ? null : await _uploadScanImage(imageFile, uid);
 
@@ -322,7 +300,6 @@ class InventoryService {
           .insert({
         'fruit_id': fruitId,
         'ripeness_stage': stage.wire,
-        // Model reports 0.0-1.0; the column has CHECK (0-100).
         'confidence_score':
         confidence == null ? 90.0 : (confidence * 100).clamp(0, 100),
         'justification':
@@ -336,15 +313,11 @@ class InventoryService {
         try {
           await _client.from('user_feedback').upsert({
             'result_id': resultId,
-            // NOT NULL in the schema, and the RLS policies compare it
-            // against auth.uid(), so the write fails without it.
             'user_id': uid,
             'corrected_stage': stage.wire,
             'is_processed': false,
           }, onConflict: 'result_id');
         } on PostgrestException {
-          // Best-effort, like the image upload. Losing a correction
-          // shouldn't stop the fruit being tracked.
         }
       }
       final best = DateTime.now().add(Duration(days: daysUntilSpoil));
@@ -384,7 +357,6 @@ class InventoryService {
       return const BatchSaveResult(saved: [], failures: []);
     }
 
-    // Uploaded once for the whole batch, not per fruit.
     final uploadedUrl =
     imageFile == null ? null : await _uploadScanImage(imageFile, uid);
 
@@ -428,8 +400,6 @@ class InventoryService {
             .insert({
           'scan_id': scanId,
           'fruit_type_id': fruitTypeId,
-          // Real detector coordinates, unlike the single-scan path
-          // which has no box to work with.
           'bounding_box':
           item.boundingBox ?? {'x': 0, 'y': 0, 'w': 1, 'h': 1},
         })
@@ -442,7 +412,6 @@ class InventoryService {
             .insert({
           'fruit_id': fruitId,
           'ripeness_stage': item.stage.wire,
-          // Model reports 0.0-1.0; the column has CHECK (0-100).
           'confidence_score': item.confidence == null
               ? 90.0
               : (item.confidence! * 100).clamp(0, 100),
@@ -457,15 +426,11 @@ class InventoryService {
           try {
             await _client.from('user_feedback').upsert({
               'result_id': resultId,
-              // NOT NULL in the schema, and the RLS policies compare it
-              // against auth.uid(), so the write fails without it.
               'user_id': uid,
               'corrected_stage': item.stage.wire,
               'is_processed': false,
             }, onConflict: 'result_id');
           } on PostgrestException {
-            // Best-effort, like the image upload. Losing a correction
-            // shouldn't stop the fruit being tracked.
           }
         }
 
@@ -499,10 +464,6 @@ class InventoryService {
     return BatchSaveResult(saved: saved, failures: failures);
   }
 
-  /// Uploads the scan photo and returns its public URL, or null if
-  /// anything goes wrong. The photo is a nice-to-have: losing it must
-  /// never stop the fruit being tracked, so every failure is swallowed
-  /// and the caller falls back to the placeholder URL.
   Future<String?> _uploadScanImage(File file, String uid) async {
     try {
       if (!await file.exists()) return null;
@@ -516,7 +477,6 @@ class InventoryService {
       };
       final contentType = ext == 'jpg' ? 'image/jpeg' : 'image/$ext';
 
-      // Foldered by user id so the storage policy can scope writes.
       final path = '$uid/${DateTime.now().millisecondsSinceEpoch}.$ext';
 
       await _client.storage.from(_scanBucket).upload(

@@ -16,8 +16,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   void initState() {
     super.initState();
-    // Loaded on open rather than on sign-in: history isn't needed
-    // until someone asks for it, and it is the heaviest query here.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<HistoryProvider>().load();
     });
@@ -250,9 +248,6 @@ class _FruitRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                // Both stages, because the point of a correction is
-                // what the model got wrong - showing only the fix
-                // would hide that.
                 '${_label(fruit.stage)} → ${_label(stage)}',
                 style: const TextStyle(fontSize: 11, color: Colors.blue),
               ),

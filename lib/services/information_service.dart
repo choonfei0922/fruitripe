@@ -22,11 +22,7 @@ class InformationService {
 
   String? get _uid => _client.auth.currentUser?.id;
 
-  // ==========================================================
-  // READ
-  // ==========================================================
-
-  /// All supported fruits, alphabetical. Currently just Banana.
+  /// All supported fruits, alphabetical.
   Future<List<FruitType>> fetchFruitTypes({bool supportedOnly = true}) async {
     try {
       var query = _client.from('fruit_type').select();

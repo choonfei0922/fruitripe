@@ -6,6 +6,7 @@ import 'package:fruitripe/core/enums.dart';
 import 'package:fruitripe/core/validators.dart';
 import 'package:fruitripe/models/user.dart';
 
+/// Account Management Module (1.0) — FR 1.1 to 1.6.
 class AuthFailure implements Exception {
   const AuthFailure(this.message);
   final String message;
@@ -155,16 +156,6 @@ class AuthService {
     }
   }
 
-  /// Sends a 6-digit recovery code instead of a magic link.
-  ///
-  /// Same Supabase call as the old link-based version - what makes it
-  /// a code is the email template. Authentication -> Emails -> Reset
-  /// Password must contain {{ .Token }}. If it only has
-  /// {{ .ConfirmationURL }} the user still gets a link and there is
-  /// nothing to type into the app.
-  ///
-  /// No redirectTo, because nothing comes back into the app by deep
-  /// link any more.
   Future<void> sendPasswordResetOtp(String email) async {
     final emailError = Validators.email(email);
     if (emailError != null) throw AuthFailure(emailError);
@@ -176,12 +167,6 @@ class AuthService {
     }
   }
 
-  /// Verifies the recovery code and sets the new password.
-  ///
-  /// The two steps belong in one method: verifyOTP(recovery) opens a
-  /// short-lived recovery session, and updateUser only works while
-  /// that session is alive. Splitting them would leave the app in a
-  /// half-authenticated state between calls.
   Future<void> resetPasswordWithOtp({
     required String email,
     required String token,
@@ -212,8 +197,6 @@ class AuthService {
       throw AuthFailure(_friendlyAuthMessage(e));
     }
 
-    // A recovery session is not a normal login. Drop it so the user
-    // signs in properly with the password they just set.
     await _client.auth.signOut();
   }
 

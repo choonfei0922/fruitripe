@@ -7,6 +7,7 @@ import 'package:fruitripe/providers/inventory_provider.dart';
 import 'package:fruitripe/services/notification_service.dart';
 import 'package:fruitripe/features/inventory/screens/inventory_detail_screen.dart';
 
+/// FR 3.3 (Shelf-Life) — spoilage notifications.
 class NotificationListScreen extends StatefulWidget {
   const NotificationListScreen({super.key});
 

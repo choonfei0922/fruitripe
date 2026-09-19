@@ -4,6 +4,7 @@ import 'package:fruitripe/models/fruit_reference.dart';
 import 'package:fruitripe/features/storage_recipe_nutrition/screens/recipe_detail_screen.dart';
 import 'package:fruitripe/features/storage_recipe_nutrition/widgets/recipe_card.dart';
 
+// FR 5.1 (Recipe)
 class RecipeListSection extends StatelessWidget {
   const RecipeListSection({
     super.key,

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:fruitripe/core/enums.dart';
 import 'package:fruitripe/providers/inventory_provider.dart';
 
+/// FR 3.1 (Shelf-Life) — logs a whole batch into the inventory.
 class AddToHarvestButton extends StatefulWidget {
   const AddToHarvestButton({
     super.key,
@@ -27,8 +28,6 @@ class AddToHarvestButton extends StatefulWidget {
   final RipenessStage? originalStage;
   final VoidCallback? onSaved;
 
-  /// The photo that was scanned. Uploaded to Storage on save; a failed
-  /// upload does not block the save.
   final File? imageFile;
 
   @override
@@ -75,7 +74,6 @@ class _AddToHarvestButtonState extends State<AddToHarvestButton> {
 
   @override
   Widget build(BuildContext context) {
-    // Rotten fruit should not be tracked - it is already waste.
     if (widget.stage == RipenessStage.rotten) {
       return Container(
         padding: const EdgeInsets.all(12),
@@ -124,8 +122,6 @@ class _AddToHarvestButtonState extends State<AddToHarvestButton> {
 
     return Column(
       children: [
-        // Quantity picker. A scan detects one fruit, but people
-        // usually buy several at once.
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

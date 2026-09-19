@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fruitripe/models/inventory_fruit.dart';
 
+// FR 3.2 (Shelf-Life)
 class ShelfLifeBar extends StatelessWidget {
   const ShelfLifeBar({
     super.key,

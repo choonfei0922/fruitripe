@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:fruitripe/models/recipe.dart';
 import 'package:fruitripe/services/information_service.dart';
 
+// FR 5.1 (Recipe)
 class RecipeDetailScreen extends StatefulWidget {
   const RecipeDetailScreen({super.key, required this.recipe});
 

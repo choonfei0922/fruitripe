@@ -235,8 +235,6 @@ class _FruitDetailView extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Whole frame with everything but this fruit dimmed, so
-                // you can see which one it picked and where it sat.
                 DetectionSpotlight(
                   imageFile: image,
                   box: result.fruit.boundingBox,

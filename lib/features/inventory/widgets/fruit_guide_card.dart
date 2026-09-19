@@ -1,14 +1,3 @@
-// lib/features/inventory/widgets/fruit_guide_card.dart
-//
-// NEW FILE. Bridges an inventory item to Modules 2, 4 and 5.
-//
-// THE PROBLEM THIS SOLVES:
-// InventoryFruit carries the fruit's name as a plain String ("Banana"),
-// but FruitDetailScreen needs a FruitType carrying the database
-// fruit_type_id - every storage, nutrition and recipe row is keyed on
-// that id. This card does the lookup once when it appears, then each
-// row opens the guide on its own tab.
-
 import 'package:flutter/material.dart';
 
 import 'package:fruitripe/models/fruit_type.dart';
@@ -16,6 +5,8 @@ import 'package:fruitripe/models/inventory_fruit.dart';
 import 'package:fruitripe/services/information_service.dart';
 import 'package:fruitripe/features/storage_recipe_nutrition/screens/fruit_detail_screen.dart';
 
+/// Route from an inventory item into FR 2.1 (Storage), FR 4.1 (Nutrition)
+/// and FR 5.1 (Recipe). Looks up fruit_type_id by name.
 class FruitGuideCard extends StatefulWidget {
   const FruitGuideCard({super.key, required this.item});
 

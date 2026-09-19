@@ -24,9 +24,6 @@ class StorageSection extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Shown when we fell back to the general row rather than a
-        // stage-specific one, so the user knows why the advice is
-        // less targeted.
         if (storage.isGeneral)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),

@@ -4,6 +4,7 @@ import 'package:fruitripe/models/analysis_result.dart';
 import 'package:fruitripe/features/scan/screen/confidence_explanation_screen.dart';
 import 'package:fruitripe/services/justification_generator.dart';
 
+/// FR 5.1 (Confidence) — confidence score; opens the explanation screen.
 class ConfidenceBadge extends StatelessWidget {
   const ConfidenceBadge({
     super.key,
@@ -20,9 +21,6 @@ class ConfidenceBadge extends StatelessWidget {
     final confidence = analysisResult.confidenceScore;
     final stage = analysisResult.ripenessStage;
 
-    // Either a low score or a species/stage pair the evaluation showed
-    // is unreliable. Same rule the explanation screen uses to decide
-    // whether to show a disclaimer, so the chip and the screen agree.
     final flagged = JustificationGenerator.isLowConfidence(confidence) ||
         JustificationGenerator.isKnownWeak(fruitType, stage);
 

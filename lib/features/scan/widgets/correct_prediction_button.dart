@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fruitripe/core/enums.dart';
 
+/// UC600 — user corrects the ripeness classification.
 class CorrectPredictionButton extends StatelessWidget {
   const CorrectPredictionButton({
     super.key,

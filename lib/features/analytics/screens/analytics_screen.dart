@@ -18,8 +18,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   void initState() {
     super.initState();
-    // Deferred to after the first frame - calling a provider that
-    // notifies listeners during build throws.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<AnalyticsProvider>().load();
     });

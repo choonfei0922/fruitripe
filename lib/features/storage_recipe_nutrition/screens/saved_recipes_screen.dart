@@ -5,6 +5,7 @@ import 'package:fruitripe/services/information_service.dart';
 import 'package:fruitripe/features/storage_recipe_nutrition/screens/recipe_detail_screen.dart';
 import 'package:fruitripe/features/storage_recipe_nutrition/widgets/recipe_card.dart';
 
+/// FR 5.3 (Recipe) — saved favourites.
 class SavedRecipesScreen extends StatefulWidget {
   const SavedRecipesScreen({super.key});
 

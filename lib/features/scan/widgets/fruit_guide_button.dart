@@ -5,6 +5,8 @@ import 'package:fruitripe/models/fruit_type.dart';
 import 'package:fruitripe/services/information_service.dart';
 import 'package:fruitripe/features/storage_recipe_nutrition/screens/fruit_detail_screen.dart';
 
+/// Route from a scan result into FR 2.1 (Storage), FR 4.1 (Nutrition)
+/// and FR 5.1 (Recipe). Looks up fruit_type_id by name.
 class FruitGuideButton extends StatefulWidget {
   const FruitGuideButton({
     super.key,

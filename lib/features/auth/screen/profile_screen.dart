@@ -8,6 +8,7 @@ import 'package:fruitripe/features/scan/screen/history_screen.dart';
 import 'package:fruitripe/features/storage_recipe_nutrition/screens/recipe_search_screen.dart';
 import 'package:fruitripe/features/storage_recipe_nutrition/screens/saved_recipes_screen.dart';
 
+/// FR 1.3, FR 1.5 (Account) — profile view and logout.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -124,10 +125,7 @@ class ProfileScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 24),
-            // Module 5 lived behind the old stage picker, which left the
-            // bottom navigation when the scanner took its place. These
-            // two tiles are the only route into saved and browsable
-            // recipes now.
+            // Entry point into FR 5.1 / FR 5.3 (Recipe Recommendation).
             _SectionLabel('My Kitchen'),
             _NavTile(
               icon: Icons.bookmark_outline,
@@ -239,7 +237,6 @@ class _InfoTile extends StatelessWidget {
   }
 }
 
-/// Same look as _InfoTile, but it goes somewhere.
 class _NavTile extends StatelessWidget {
   const _NavTile({
     required this.icon,

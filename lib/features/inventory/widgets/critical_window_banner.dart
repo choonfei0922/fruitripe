@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// "Critical Window" alert. Red rather than amber now — at 24 hours out
-/// this is the last useful warning, and amber read as advisory.
+/// FR 3.3 (Shelf-Life Tracking) — alert as produce approaches spoilage,
+/// shown inside the 24h window.
 class CriticalWindowBanner extends StatelessWidget {
   const CriticalWindowBanner({
     super.key,

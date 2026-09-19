@@ -46,11 +46,6 @@ class ScanFailed extends ScanOutcome {
   const ScanFailed(this.message);
 }
 
-/// Orchestrates the Fruit Identification & Image Processing Module for a
-/// SINGLE fruit (candidates.first) — see BatchAnalysisService for the
-/// multi-fruit version, which shares the same per-fruit pipeline via
-/// FruitResultBuilder. Defaults to [YoloFruitIdentifier], which answers
-/// ripeness directly for all 8 trained species.
 class ScanService {
   final FruitIdentifier _identifier;
   final FruitResultBuilder _resultBuilder;

@@ -5,6 +5,7 @@ import 'package:fruitripe/models/inventory_fruit.dart';
 import 'package:fruitripe/features/inventory/widgets/fruit_image.dart';
 import 'package:fruitripe/features/inventory/widgets/shelf_life_bar.dart';
 
+// FR 3.1, FR 3.2 (Shelf-Life)
 class FruitCard extends StatelessWidget {
   const FruitCard({
     super.key,

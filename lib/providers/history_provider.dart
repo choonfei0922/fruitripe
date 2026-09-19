@@ -34,9 +34,7 @@ class HistoryProvider extends ChangeNotifier {
   int get totalCorrections =>
       _entries.fold(0, (sum, e) => sum + e.correctionCount);
 
-  /// Wired through the auth proxy in main.dart. Clears on a user
-  /// change so the next account never sees the previous one's scans
-  /// in the gap before its own load finishes.
+  /// UC601 — records a completed scan so it appears in history.
   void onUserChanged(String userId) {
     if (_userId == userId) return;
     _userId = userId;

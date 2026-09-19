@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'package:fruitripe/providers/auth_provider.dart';
 
+/// FR 1.6 (Account) — profile picture.
 class ProfileAvatar extends StatefulWidget {
   const ProfileAvatar({
     super.key,
@@ -26,7 +27,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
   bool _uploading = false;
 
   Future<void> _pick(ImageSource source) async {
-    Navigator.of(context).pop(); // close the sheet first
+    Navigator.of(context).pop();
 
     try {
       final picked = await _picker.pickImage(
@@ -126,8 +127,6 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
         CircleAvatar(
           radius: widget.radius,
           backgroundColor: scheme.primaryContainer,
-          // Keyed on the URL so a new upload actually repaints -
-          // without this Flutter reuses the cached image.
           backgroundImage: profile?.hasProfilePic == true
               ? NetworkImage(profile!.profilePicUrl!)
               : null,

@@ -29,7 +29,6 @@ class AppUser {
   bool get hasProfilePic =>
       profilePicUrl != null && profilePicUrl!.trim().isNotEmpty;
 
-  /// First letter of the username, for the avatar fallback.
   String get initial =>
       username.trim().isEmpty ? '?' : username.trim()[0].toUpperCase();
 
@@ -43,7 +42,6 @@ class AppUser {
       role: UserRole.fromWire(map['role'] as String),
       alertPreference:
       AlertPreference.fromWire(map['alert_preference'] as String),
-      // int2 in Postgres arrives as int, but be defensive.
       failedLoginCount: (map['failed_login_count'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),

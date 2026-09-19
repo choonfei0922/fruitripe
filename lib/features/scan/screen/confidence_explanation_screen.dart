@@ -145,7 +145,6 @@ class ConfidenceExplanationScreen extends StatelessWidget {
   };
 }
 
-/// Large circular percentage dial, matching Figure 4.3's "94% CONFIDENCE".
 class _ConfidenceDial extends StatelessWidget {
   final double confidence;
   final Color color;

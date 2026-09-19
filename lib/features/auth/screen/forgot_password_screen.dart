@@ -6,6 +6,8 @@ import 'package:fruitripe/providers/auth_provider.dart';
 import 'package:fruitripe/features/auth/screen/reset_password_otp_screen.dart';
 import 'package:fruitripe/features/auth/widgets/auth_error_banner.dart';
 
+
+/// FR 1.4 (Account) — reset password via email, request step.
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
 

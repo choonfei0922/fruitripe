@@ -35,8 +35,6 @@ class _RecipeCardState extends State<RecipeCard> {
     if (_busy) return;
     setState(() => _busy = true);
 
-    // Optimistic update - the heart responds immediately rather
-    // than waiting on the network.
     final previous = _saved;
     setState(() => _saved = !previous);
 

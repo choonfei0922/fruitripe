@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:fruitripe/models/waste_summary.dart';
 
+/// Summary and Visualisation Module (6.0) — FR 6.1 to 6.4.
 class AnalyticsFailure implements Exception {
   const AnalyticsFailure(this.message);
   final String message;
@@ -75,15 +76,12 @@ class AnalyticsService {
         final map = row as Map<String, dynamic>;
         if (map['is_batch'] == true) {
           batch++;
-          // Null when a batch scan somehow has no fruit rows - a
-          // failed save partway through the chain, say.
           batchFruit += (map['fruit'] as List?)?.length ?? 0;
         }
       }
 
       return (batch, list.length, batchFruit);
     } on PostgrestException {
-      // Table empty, missing, or blocked - not worth failing over.
       return (0, 0, 0);
     }
   }

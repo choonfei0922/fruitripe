@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:fruitripe/models/waste_summary.dart';
 
+// FR 6.2 (Summary)
 class ImpactCard extends StatelessWidget {
   const ImpactCard({super.key, required this.summary});
 

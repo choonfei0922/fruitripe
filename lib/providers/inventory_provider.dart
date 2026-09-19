@@ -38,10 +38,6 @@ class InventoryProvider extends ChangeNotifier {
   String? get categoryFilter => _categoryFilter;
   AlertPreference get alertPreference => _alertPreference;
 
-  /// Called from the proxy provider in main.dart whenever AuthProvider
-  /// notifies. Clears silently, without notifyListeners: this runs
-  /// during a build and notifying there throws. The auth change is
-  /// already driving the rebuild.
   void onUserChanged(String userId) {
     if (_userId == userId) return;
     _userId = userId;
@@ -49,12 +45,8 @@ class InventoryProvider extends ChangeNotifier {
     _categoryFilter = null;
     _errorMessage = null;
     _loading = false;
-    // _allFruitNames stays: it is the same list for everyone.
   }
 
-  /// The filter list. Shows every supported fruit, with anything
-  /// already in the harvest folded in so an unsupported leftover row
-  /// is still filterable.
   List<String> get categories {
     final set = <String>{
       ..._allFruitNames,
@@ -115,9 +107,6 @@ class InventoryProvider extends ChangeNotifier {
       notifyListeners();
     }
 
-    // Separate and non-fatal: an empty filter list is a smaller
-    // problem than a failed inventory load, so it never sets
-    // _errorMessage.
     await _loadFruitNames();
   }
 
@@ -190,11 +179,6 @@ class InventoryProvider extends ChangeNotifier {
     }
   }
 
-  /// Saves a scan result to the harvest. Returns true on success;
-  /// check [errorMessage] on failure.
-  ///
-  /// [imageFile] is the scanned photo. It gets uploaded to Storage so
-  /// the harvest card shows the real fruit.
   Future<bool> addFromScan({
     required String fruitName,
     required RipenessStage stage,

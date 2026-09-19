@@ -7,6 +7,7 @@ import 'package:fruitripe/core/enums.dart';
 import 'package:fruitripe/models/app_notification.dart';
 import 'package:fruitripe/models/inventory_fruit.dart';
 
+/// FR 3.3 (Shelf-Life) — schedules local spoilage alerts.
 class NotificationService {
   NotificationService({
     FlutterLocalNotificationsPlugin? plugin,

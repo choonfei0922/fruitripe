@@ -7,6 +7,7 @@ import 'package:fruitripe/services/auth_service.dart';
 import 'package:fruitripe/features/auth/screen/verify_otp_screen.dart';
 import 'package:fruitripe/features/auth/widgets/auth_error_banner.dart';
 
+/// FR 1.1 (Account) — register an account.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 

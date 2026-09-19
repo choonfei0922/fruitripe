@@ -1,5 +1,7 @@
 import '../core/enums.dart';
 
+/// FR 3.2 (Time Prediction) — typical days remaining until spoilage,
+/// per species and ripeness stage, at room temperature.
 class ShelfLifeReference {
   static const Map<String, Map<RipenessStage, int>> _daysUntilSpoil = {
     'Apple': {
@@ -52,8 +54,6 @@ class ShelfLifeReference {
     },
   };
 
-  /// Fallback for any species not in the table (e.g. if FruitIdentifier is
-  /// later extended beyond these 8 species before this table is updated).
   static const int _fallbackDays = 3;
 
   static int daysUntilSpoil(String fruitType, RipenessStage stage) {

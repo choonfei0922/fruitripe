@@ -37,8 +37,6 @@ class ScanHistoryService {
         )
       ''';
 
-  /// Newest first. [limit] keeps the profile screen from pulling a
-  /// year of scans to show the last few.
   Future<List<ScanHistoryEntry>> fetchHistory({int limit = 50}) async {
     final uid = _uid;
     if (uid == null) {
@@ -55,8 +53,6 @@ class ScanHistoryService {
 
       return (rows as List)
           .map((r) => ScanHistoryEntry.fromMap(r as Map<String, dynamic>))
-      // A scan whose fruit rows all failed to parse has nothing to
-      // show. Keeping it would render an empty card.
           .where((e) => e.fruits.isNotEmpty)
           .toList();
     } on PostgrestException catch (e) {
